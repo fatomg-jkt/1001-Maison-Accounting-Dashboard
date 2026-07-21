@@ -13,7 +13,7 @@ const compact=(value:number)=>`Rp ${(value/1000).toLocaleString('id-ID',{maximum
 const colors=['#1f5b9d','#4b83bd','#7ba4cf','#a9c3df','#d6e2ef']
 
 type CompanyFilter='all'|'pt-1001'|'pt-maison'
-const companies:{value:CompanyFilter;label:string;scale:number}[]=[{value:'all',label:'Semua Perusahaan',scale:1},{value:'pt-1001',label:'PT 1001',scale:.46},{value:'pt-maison',label:'PT Maison',scale:.54}]
+const companies:{value:CompanyFilter;label:string;scale:number}[]=[{value:'all',label:'Semua Perusahaan',scale:1},{value:'pt-1001',label:'1001',scale:.46},{value:'pt-maison',label:'Maison',scale:.54}]
 const CompanyFilterContext=createContext<{company:CompanyFilter;setCompany:(company:CompanyFilter)=>void}>({company:'all',setCompany:()=>{}})
 const useCompanyFilter=()=>useContext(CompanyFilterContext)
 const useCompanyData=()=>{const {company}=useCompanyFilter();const selected=companies.find(x=>x.value===company)??companies[0];return useMemo(()=>{const scaleValue=(value:number)=>Math.round(value*selected.scale);return {selected,kpis:kpis.map(k=>({...k,value:scaleValue(k.value)})),monthly:monthly.map(m=>({...m,revenue:scaleValue(m.revenue),expense:scaleValue(m.expense),profit:scaleValue(m.profit),cash:scaleValue(m.cash)})),departments:departments.map(d=>({...d,value:scaleValue(d.value)})),accounts:accounts.map(a=>({...a,value:scaleValue(a.value)})),balanceRows:balanceRows.map(r=>r.value===undefined?r:{...r,value:scaleValue(r.value)}),incomeRows:incomeRows.map(r=>r.value===undefined?r:{...r,value:scaleValue(r.value)})}},[selected])}
