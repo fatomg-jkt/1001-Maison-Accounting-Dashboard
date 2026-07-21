@@ -1,0 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base; @tailwind components; @tailwind utilities;
+@layer base { *{box-sizing:border-box} body{@apply m-0 bg-slate-50 text-slate-700 antialiased} button,select,input{@apply font-sans} }
+@layer components { .card{@apply rounded-xl border border-slate-200 bg-white shadow-card} .label{@apply text-[11px] font-semibold uppercase tracking-wider text-slate-400} }
