@@ -2,31 +2,57 @@
 @tailwind base; @tailwind components; @tailwind utilities;
 
 :root{
-  --color-primary-navy:#0B1F3A; --color-secondary-navy:#132A4A; --color-primary-blue:#2563EB; --color-blue-hover:#1D4ED8;
-  --color-soft-blue:#EAF2FF; --color-teal:#0F9F8F; --color-teal-hover:#0D8578; --color-soft-teal:#E8F8F5;
-  --color-gold:#D6A84B; --color-soft-gold:#FFF7E6; --color-bg:#F5F7FB; --color-card:#FFFFFF; --color-border:#E2E8F0;
-  --color-text:#0F172A; --color-muted:#64748B; --color-success:#16A34A; --color-warning:#D97706; --color-danger:#DC2626;
-  --shadow-card:0 4px 16px rgba(15,23,42,.06); --shadow-card-hover:0 12px 28px rgba(15,23,42,.10);
+  --color-body:#05070A; --color-bg:#0A1220; --color-sidebar:#08111F; --color-header:#0D1728;
+  --color-card:#111C2D; --color-card-secondary:#162338; --color-profile:#132238; --color-border:#243247;
+  --color-text:#F8FAFC; --color-muted:#CBD5E1; --color-label:#94A3B8;
+  --color-primary-navy:#0D1728; --color-secondary-navy:#162338; --color-primary-blue:#3B82F6; --color-blue-hover:#2563EB;
+  --color-active-menu:#1D4ED8; --color-teal:#14B8A6; --color-teal-hover:#0F9F8F; --color-success:#22C55E;
+  --color-warning:#F59E0B; --color-danger:#EF4444; --color-purple:#8B5CF6; --color-gold:#D6A84B;
+  --color-soft-blue:rgba(59,130,246,.16); --color-soft-teal:rgba(20,184,166,.16); --color-soft-gold:rgba(245,158,11,.16);
+  --shadow-card:0 10px 25px rgba(0,0,0,.35); --shadow-card-hover:0 16px 34px rgba(0,0,0,.45);
 }
 
 @layer base{
   *{box-sizing:border-box}
-  body{@apply m-0 font-sans antialiased; background:var(--color-bg); color:var(--color-text)}
+  body{@apply m-0 font-sans antialiased; background:var(--color-body); color:var(--color-text)}
   button,select,input{@apply font-sans transition-all duration-200 ease-out}
-  input,select{background:#F8FAFC; border-color:var(--color-border); color:var(--color-text)}
-  input:focus,select:focus{outline:none; border-color:var(--color-primary-blue); box-shadow:0 0 0 3px rgba(37,99,235,.12)}
-  table thead{background:#F1F5F9; color:#334155}
-  table tbody tr{border-color:var(--color-border)}
-  table tbody tr:hover{background:#F8FAFC}
+  input,select{background:var(--color-card-secondary); border-color:var(--color-border); color:var(--color-text)}
+  input::placeholder{color:var(--color-label)}
+  input:focus,select:focus{outline:none; border-color:var(--color-primary-blue); box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+  option{background:var(--color-card-secondary); color:var(--color-text)}
+  table{color:var(--color-muted)}
+  table thead{background:var(--color-card-secondary); color:var(--color-text)}
+  table tbody tr{border-color:var(--color-border); background:var(--color-card)}
+  table tbody tr:hover{background:var(--color-card-secondary)}
 }
 
 @layer components{
-  .card{@apply rounded-[14px] border bg-white; border-color:var(--color-border); box-shadow:var(--shadow-card)}
-  .card-hover{@apply transition-all duration-200 ease-out hover:-translate-y-0.5;}
+  .card{@apply rounded-[16px] border; background:var(--color-card); border-color:var(--color-border); box-shadow:var(--shadow-card); color:var(--color-muted)}
+  .card-hover{@apply transition-all duration-200 ease-out hover:-translate-y-[3px];}
   .card-hover:hover{box-shadow:var(--shadow-card-hover)}
-  .label{@apply text-[11px] font-semibold uppercase tracking-wider; color:var(--color-muted)}
-  .btn-secondary{@apply h-9 px-3 flex items-center gap-2 bg-white border rounded-lg text-xs font-medium; border-color:#CBD5E1; color:#334155}
-  .btn-secondary:hover{background:#F1F5F9}
+  .label{@apply text-[11px] font-semibold uppercase tracking-wider; color:var(--color-label)}
+  .btn-secondary{@apply h-9 px-3 flex items-center gap-2 border rounded-lg text-xs font-medium; background:transparent; border-color:#64748B; color:var(--color-muted)}
+  .btn-secondary:hover{background:var(--color-card-secondary); color:var(--color-text)}
+  .btn-secondary.text-red-600{border-color:var(--color-danger); color:var(--color-danger)}
+  .btn-secondary.text-red-600:hover{background:var(--color-danger); color:#fff}
+  .btn-secondary.text-emerald-700{border-color:var(--color-success); color:var(--color-success)}
+  .btn-secondary.text-emerald-700:hover{background:var(--color-success); color:#fff}
   .btn-update{@apply h-9 px-3 flex items-center gap-2 rounded-lg text-xs font-medium text-white; background:var(--color-teal)}
   .btn-update:hover{background:var(--color-teal-hover)}
 }
+
+@layer utilities{
+  .bg-white{background-color:var(--color-card)!important}.bg-slate-100,.bg-slate-50{background-color:var(--color-card-secondary)!important}
+  .bg-blue-50{background-color:rgba(59,130,246,.16)!important}.bg-emerald-50{background-color:rgba(34,197,94,.16)!important}.bg-red-50{background-color:rgba(239,68,68,.16)!important}.bg-amber-50{background-color:rgba(245,158,11,.16)!important}
+  .bg-navy-900{background-color:var(--color-sidebar)!important}.bg-navy-800{background-color:var(--color-profile)!important}.bg-blue-700{background-color:var(--color-active-menu)!important}
+  .text-navy-900,.text-slate-700{color:var(--color-text)!important}.text-slate-600,.text-slate-500,.text-slate-400{color:var(--color-muted)!important}.text-slate-300{color:var(--color-label)!important}
+  .text-brand,.text-blue-600,.text-blue-300{color:var(--color-primary-blue)!important}.text-emerald-600,.text-emerald-700{color:var(--color-success)!important}.text-red-500,.text-red-600,.text-red-700{color:var(--color-danger)!important}.text-amber-700{color:var(--color-warning)!important}
+  .border,.border-t,.border-b,.border-l{border-color:var(--color-border)!important}.border-white\/10{border-color:var(--color-border)!important}.border-slate-200,.border-slate-100,.border-slate-300,.border-emerald-100{border-color:var(--color-border)!important}
+  .hover\:bg-white\/10:hover{background-color:rgba(59,130,246,.12)!important}.hover\:bg-blue-50:hover{background-color:rgba(59,130,246,.12)!important}.hover\:border-blue-200:hover{border-color:var(--color-primary-blue)!important}
+}
+
+header{background:var(--color-header)!important; border-bottom:1px solid var(--color-border)!important}
+main{background:var(--color-bg); min-height:calc(100vh - 5rem)}
+aside{background:var(--color-sidebar)!important}
+aside nav button{color:#E2E8F0} aside nav button:hover{background:rgba(59,130,246,.12)!important} aside nav button.bg-blue-700{border-left:4px solid var(--color-primary-blue)} aside nav .ml-9 button{color:#AAB6C8}
+.recharts-cartesian-grid line{stroke:var(--color-border)} .recharts-text{fill:var(--color-label)} .recharts-default-tooltip{background:#1B2A41!important; border-color:var(--color-border)!important; color:#fff!important}
