@@ -56,20 +56,51 @@ const profitLossTemplateColumnWidths=[
   {wch:18}
 ]
 
-function handleDownloadBalanceSheetTemplate(){
+function applyTemplateSheetSettings(worksheet:Record<string,unknown>,columnWidths:{wch:number}[],columnCount:number){
+  worksheet['!cols']=columnWidths
+  worksheet['!freeze']={ySplit:1}
+  worksheet['!autofilter']={ref:`A1:${String.fromCharCode(64+columnCount)}1`}
+}
+
+function handleDownloadBalanceSheetWorkbook(){
   try{
-    const data=[
+    const dataRows=[
       ['Perusahaan','Bulan','Tahun','Kode Akun','Nama Akun','Kategori','Subkategori','Saldo Akhir'],
       ['1001 & Maison','Juni',2026,'1101','Kas','Aset','Kas dan Bank',500000000],
       ['1001 & Maison','Juni',2026,'1201','Piutang Usaha','Aset','Piutang',300000000],
       ['1001 & Maison','Juni',2026,'1301','Persediaan','Aset','Persediaan',250000000],
       ['1001 & Maison','Juni',2026,'2101','Utang Usaha','Liabilitas','Utang Lancar',200000000],
-      ['1001 & Maison','Juni',2026,'3101','Modal','Ekuitas','Modal Disetor',850000000]
+      ['1001 & Maison','Juni',2026,'3101','Modal Disetor','Ekuitas','Modal',850000000]
     ]
-    const worksheet=XLSX.utils.aoa_to_sheet(data)
-    worksheet['!cols']=balanceSheetTemplateColumnWidths
+    const guideRows=[
+      ['Aturan','Penjelasan'],
+      ['Nama worksheet','Jangan mengubah nama worksheet DATA_NERACA.'],
+      ['Header','Jangan mengubah nama header.'],
+      ['Satu akun per baris','Satu baris mewakili satu akun.'],
+      ['Perusahaan','Kolom Perusahaan wajib diisi.'],
+      ['Bulan','Kolom Bulan wajib menggunakan Januari sampai Desember.'],
+      ['Tahun','Kolom Tahun wajib berupa angka.'],
+      ['Kategori','Kategori hanya boleh: Aset, Liabilitas, Ekuitas.'],
+      ['Saldo Akhir','Saldo Akhir harus berupa angka tanpa simbol mata uang.'],
+      ['Contoh data','Hapus contoh data sebelum mengunggah data sebenarnya.'],
+      ['Struktur kolom','Jangan menambahkan kolom baru di antara kolom yang tersedia.']
+    ]
+    const referenceRows=[
+      ['Kategori','Contoh Subkategori'],
+      ['Aset','Kas dan Bank'],['Aset','Piutang'],['Aset','Persediaan'],['Aset','Aset Tetap'],['Aset','Aset Lainnya'],
+      ['Liabilitas','Utang Usaha'],['Liabilitas','Utang Pajak'],['Liabilitas','Utang Jangka Pendek'],['Liabilitas','Utang Jangka Panjang'],
+      ['Ekuitas','Modal'],['Ekuitas','Laba Ditahan'],['Ekuitas','Laba Tahun Berjalan']
+    ]
     const workbook=XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook,worksheet,'NERACA')
+    const dataSheet=XLSX.utils.aoa_to_sheet(dataRows)
+    const guideSheet=XLSX.utils.aoa_to_sheet(guideRows)
+    const referenceSheet=XLSX.utils.aoa_to_sheet(referenceRows)
+    applyTemplateSheetSettings(dataSheet,balanceSheetTemplateColumnWidths,8)
+    applyTemplateSheetSettings(guideSheet,[{wch:24},{wch:78}],2)
+    applyTemplateSheetSettings(referenceSheet,[{wch:22},{wch:28}],2)
+    XLSX.utils.book_append_sheet(workbook,dataSheet,'DATA_NERACA')
+    XLSX.utils.book_append_sheet(workbook,guideSheet,'PANDUAN')
+    XLSX.utils.book_append_sheet(workbook,referenceSheet,'REFERENSI')
     XLSX.writeFile(workbook,'template-upload-neraca.xlsx',{bookType:'xlsx',compression:true})
   }catch(error){
     console.error('Gagal download template Neraca:',error)
@@ -77,9 +108,9 @@ function handleDownloadBalanceSheetTemplate(){
   }
 }
 
-function handleDownloadProfitLossTemplate(){
+function handleDownloadProfitLossWorkbook(){
   try{
-    const data=[
+    const dataRows=[
       ['Perusahaan','Bulan','Tahun','Kode Akun','Nama Akun','Kategori','Subkategori','Nilai'],
       ['1001 & Maison','Juni',2026,'4101','Penjualan','Pendapatan','Penjualan Bersih',1500000000],
       ['1001 & Maison','Juni',2026,'5101','Harga Pokok Penjualan','HPP','Harga Pokok Penjualan',700000000],
@@ -87,10 +118,35 @@ function handleDownloadProfitLossTemplate(){
       ['1001 & Maison','Juni',2026,'6201','Biaya Sewa','Beban Operasional','Sewa',80000000],
       ['1001 & Maison','Juni',2026,'6301','Biaya Administrasi','Beban Operasional','Administrasi',25000000]
     ]
-    const worksheet=XLSX.utils.aoa_to_sheet(data)
-    worksheet['!cols']=profitLossTemplateColumnWidths
+    const guideRows=[
+      ['Aturan','Penjelasan'],
+      ['Nama worksheet','Jangan mengubah nama worksheet DATA_LABA_RUGI.'],
+      ['Header','Jangan mengubah nama header.'],
+      ['Satu akun per baris','Satu baris mewakili satu akun.'],
+      ['Perusahaan','Kolom Perusahaan wajib diisi.'],
+      ['Bulan','Bulan harus menggunakan Januari sampai Desember.'],
+      ['Tahun','Tahun wajib berupa angka.'],
+      ['Nilai','Nilai harus berupa angka tanpa simbol mata uang.'],
+      ['Contoh data','Hapus contoh data sebelum mengunggah data sebenarnya.'],
+      ['Struktur kolom','Jangan menambahkan kolom baru di antara kolom yang tersedia.'],
+      ['Kategori','Kategori yang diperbolehkan: Pendapatan, HPP, Beban Operasional, Pendapatan Lain-lain, Beban Lain-lain, Pajak.']
+    ]
+    const referenceRows=[
+      ['Kategori','Contoh Subkategori'],
+      ['Pendapatan','Penjualan Bersih'],['Pendapatan','Pendapatan Jasa'],['HPP','Bahan Baku'],['HPP','Biaya Produksi'],
+      ['Beban Operasional','Gaji'],['Beban Operasional','Sewa'],['Beban Operasional','Utilitas'],['Beban Operasional','Administrasi'],
+      ['Pendapatan Lain-lain','Pendapatan Bunga'],['Beban Lain-lain','Biaya Bank'],['Pajak','Pajak Penghasilan']
+    ]
     const workbook=XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook,worksheet,'LABA_RUGI')
+    const dataSheet=XLSX.utils.aoa_to_sheet(dataRows)
+    const guideSheet=XLSX.utils.aoa_to_sheet(guideRows)
+    const referenceSheet=XLSX.utils.aoa_to_sheet(referenceRows)
+    applyTemplateSheetSettings(dataSheet,profitLossTemplateColumnWidths,8)
+    applyTemplateSheetSettings(guideSheet,[{wch:24},{wch:90}],2)
+    applyTemplateSheetSettings(referenceSheet,[{wch:24},{wch:30}],2)
+    XLSX.utils.book_append_sheet(workbook,dataSheet,'DATA_LABA_RUGI')
+    XLSX.utils.book_append_sheet(workbook,guideSheet,'PANDUAN')
+    XLSX.utils.book_append_sheet(workbook,referenceSheet,'REFERENSI')
     XLSX.writeFile(workbook,'template-upload-laba-rugi.xlsx',{bookType:'xlsx',compression:true})
   }catch(error){
     console.error('Gagal download template Laba Rugi:',error)
@@ -108,7 +164,7 @@ function ExportExcelButton({payload}:{payload:ReportPayload}){const [loading,set
 type Preview={rows:ReportRow[];errors:string[];total:number}
 function ExcelPreviewTable({preview}:{preview:Preview|null}){return !preview?null:<div className="border rounded-lg overflow-auto max-h-56"><table className="w-full text-xs"><thead><tr>{Object.keys(preview.rows[0]??{}).map(k=><th className="p-2 text-left bg-slate-100" key={k}>{formatHeader(k)}</th>)}</tr></thead><tbody>{preview.rows.slice(0,20).map((r,i)=><tr key={i} className="border-t">{Object.values(r).map((v,j)=><td className="p-2" key={j}>{String(v??'')}</td>)}</tr>)}</tbody></table></div>}
 function ImportValidationSummary({preview}:{preview:Preview|null}){return !preview?null:<div className="grid grid-cols-3 gap-2 text-xs"><div className="card p-3">Total baris<br/><b>{preview.total}</b></div><div className="card p-3 text-emerald-700">Valid<br/><b>{Math.max(0,preview.total-preview.errors.length)}</b></div><div className="card p-3 text-red-600">Error<br/><b>{preview.errors.length}</b></div>{preview.errors.length>0&&<div className="col-span-3 text-red-600 bg-red-50 p-2 rounded-lg">{preview.errors.slice(0,5).map(e=><div key={e}>{e}</div>)}</div>}</div>}
-function UpdateDataModal({open,onClose}:{open:boolean;onClose:()=>void}){const [preview,setPreview]=useState<Preview|null>(null);const [mode,setMode]=useState('Tambah data baru');const readFile=(file?:File)=>{if(!file)return;if(!/\.xls[x]?$/i.test(file.name)){alert('File harus .xlsx atau .xls');return}file.arrayBuffer().then(buffer=>{const bytes=new Uint8Array(buffer);const dec=new TextDecoder();let text='';for(let i=0;i<bytes.length-30;i++){if(bytes[i]===0x50&&bytes[i+1]===0x4b&&bytes[i+2]===3&&bytes[i+3]===4){const nameLen=bytes[i+26]|(bytes[i+27]<<8),extraLen=bytes[i+28]|(bytes[i+29]<<8),size=bytes[i+18]|(bytes[i+19]<<8)|(bytes[i+20]<<16)|(bytes[i+21]<<24),name=dec.decode(bytes.slice(i+30,i+30+nameLen));if(name==='xl/worksheets/sheet1.xml')text=dec.decode(bytes.slice(i+30+nameLen+extraLen,i+30+nameLen+extraLen+size))}}const table=text?Array.from(text.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)).map(m=>Array.from(m[1].matchAll(/<c[^>]*(?:t="inlineStr")?[^>]*>(?:<is><t>([\s\S]*?)<\/t><\/is>|<v>([\s\S]*?)<\/v>)<\/c>/g)).map(c=>(c[1]??c[2]??'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'))):dec.decode(bytes).split(/\r?\n/).filter(Boolean).map(line=>line.split(/,|\t/));const dataRows=table.filter(r=>['1001','Maison'].includes(r[0]??''));const rows=dataRows.map((cols,i)=>({entitas:cols[0]??'',tahun:Number(cols[1]??activeFilters.tahun),bulan:cols[2]??activeFilters.bulan,namaAkun:cols[3]??'',nominal:Number(cols[4]??0),department:cols[5]??'',costCenter:cols[6]??'',_row:i+1}));const errors:string[]=[];const seen=new Set<string>();rows.forEach((r,i)=>{if(!['1001','Maison'].includes(String(r.entitas)))errors.push(`Baris ${i+1}: Entitas harus 1001 atau Maison`);if(!Number.isFinite(r.tahun))errors.push(`Baris ${i+1}: Tahun harus angka`);if(!['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'].includes(String(r.bulan)))errors.push(`Baris ${i+1}: Bulan tidak valid`);if(!r.namaAkun)errors.push(`Baris ${i+1}: Nama akun wajib diisi`);if(!Number.isFinite(r.nominal))errors.push(`Baris ${i+1}: Nominal harus angka`);const key=`${r.entitas}-${r.tahun}-${r.bulan}-${r.namaAkun}-${r.department}-${r.costCenter}`;if(seen.has(key))errors.push(`Baris ${i+1}: Data duplikat`);seen.add(key)});setPreview({rows,total:rows.length,errors})}).catch(()=>alert('Preview XLSX biner penuh membutuhkan koneksi library SheetJS; gunakan template tabular yang disediakan untuk tahap awal.'))};return !open?null:<div className="fixed inset-0 z-50 bg-slate-950/40 grid place-items-center p-4"><div className="bg-white rounded-xl shadow-xl w-full max-w-3xl p-5 space-y-4"><div className="flex justify-between"><h2 className="font-bold text-navy-900">Update Data Laporan</h2><button onClick={onClose}><X size={18}/></button></div><div className="grid sm:grid-cols-3 gap-3"><select className="border rounded-lg h-10 px-3 text-xs"><option>Semua Perusahaan</option><option>1001</option><option>Maison</option></select><input className="border rounded-lg h-10 px-3 text-xs" defaultValue={`${activeFilters.bulan} ${activeFilters.tahun}`}/><select className="border rounded-lg h-10 px-3 text-xs" value={mode} onChange={e=>setMode(e.target.value)}><option>Tambahkan data baru</option><option>Perbarui data yang sudah ada</option><option>Ganti seluruh data periode terpilih</option></select></div><div className="grid sm:grid-cols-2 gap-2"><button type="button" onClick={handleDownloadBalanceSheetTemplate} className="h-9 px-3 border border-blue-200 bg-blue-50 text-navy-900 rounded-lg text-xs font-semibold hover:bg-blue-100 inline-flex items-center justify-center gap-2"><Download size={14}/>Download Template Neraca</button><button type="button" onClick={handleDownloadProfitLossTemplate} className="h-9 px-3 border border-blue-200 bg-blue-50 text-navy-900 rounded-lg text-xs font-semibold hover:bg-blue-100 inline-flex items-center justify-center gap-2"><Download size={14}/>Download Template Laba Rugi</button></div><label className="border-2 border-dashed rounded-xl p-8 text-center block text-xs text-slate-500"><Upload className="mx-auto mb-2"/>Drag-and-drop file .xlsx/.xls atau Pilih File<input type="file" accept=".xlsx,.xls" className="hidden" onChange={e=>readFile(e.target.files?.[0])}/></label><button onClick={()=>preview?alert('Preview Data siap ditinjau.'):alert('Pilih file Excel terlebih dahulu.')} className="h-9 px-3 border rounded-lg text-xs">Preview Data</button><ImportValidationSummary preview={preview}/><ExcelPreviewTable preview={preview}/><div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg">Penyimpanan permanen belum dikonfigurasi. Data upload diproses melalui abstraction data service sementara dan siap dihubungkan ke API/database.</div><div className="flex justify-end gap-2"><button onClick={onClose} className="h-9 px-3 border rounded-lg text-xs">Batal</button><button onClick={()=>preview?alert(confirm('Ganti data lama sesuai mode update?')?'Data tervalidasi. KPI, tabel, grafik, dan analisa akan direfresh otomatis setelah API/database aktif.':'Dibatalkan'):alert('Preview Data terlebih dahulu.')} className="h-9 px-3 bg-brand text-white rounded-lg text-xs">Simpan Perubahan</button></div></div></div>}
+function UpdateDataModal({open,onClose}:{open:boolean;onClose:()=>void}){const [preview,setPreview]=useState<Preview|null>(null);const [mode,setMode]=useState('Tambah data baru');const readFile=(file?:File)=>{if(!file)return;if(!/\.xls[x]?$/i.test(file.name)){alert('File harus .xlsx atau .xls');return}file.arrayBuffer().then(buffer=>{const bytes=new Uint8Array(buffer);const dec=new TextDecoder();let text='';for(let i=0;i<bytes.length-30;i++){if(bytes[i]===0x50&&bytes[i+1]===0x4b&&bytes[i+2]===3&&bytes[i+3]===4){const nameLen=bytes[i+26]|(bytes[i+27]<<8),extraLen=bytes[i+28]|(bytes[i+29]<<8),size=bytes[i+18]|(bytes[i+19]<<8)|(bytes[i+20]<<16)|(bytes[i+21]<<24),name=dec.decode(bytes.slice(i+30,i+30+nameLen));if(name==='xl/worksheets/sheet1.xml')text=dec.decode(bytes.slice(i+30+nameLen+extraLen,i+30+nameLen+extraLen+size))}}const table=text?Array.from(text.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)).map(m=>Array.from(m[1].matchAll(/<c[^>]*(?:t="inlineStr")?[^>]*>(?:<is><t>([\s\S]*?)<\/t><\/is>|<v>([\s\S]*?)<\/v>)<\/c>/g)).map(c=>(c[1]??c[2]??'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'))):dec.decode(bytes).split(/\r?\n/).filter(Boolean).map(line=>line.split(/,|\t/));const dataRows=table.filter(r=>['1001','Maison'].includes(r[0]??''));const rows=dataRows.map((cols,i)=>({entitas:cols[0]??'',tahun:Number(cols[1]??activeFilters.tahun),bulan:cols[2]??activeFilters.bulan,namaAkun:cols[3]??'',nominal:Number(cols[4]??0),department:cols[5]??'',costCenter:cols[6]??'',_row:i+1}));const errors:string[]=[];const seen=new Set<string>();rows.forEach((r,i)=>{if(!['1001','Maison'].includes(String(r.entitas)))errors.push(`Baris ${i+1}: Entitas harus 1001 atau Maison`);if(!Number.isFinite(r.tahun))errors.push(`Baris ${i+1}: Tahun harus angka`);if(!['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'].includes(String(r.bulan)))errors.push(`Baris ${i+1}: Bulan tidak valid`);if(!r.namaAkun)errors.push(`Baris ${i+1}: Nama akun wajib diisi`);if(!Number.isFinite(r.nominal))errors.push(`Baris ${i+1}: Nominal harus angka`);const key=`${r.entitas}-${r.tahun}-${r.bulan}-${r.namaAkun}-${r.department}-${r.costCenter}`;if(seen.has(key))errors.push(`Baris ${i+1}: Data duplikat`);seen.add(key)});setPreview({rows,total:rows.length,errors})}).catch(()=>alert('Preview XLSX biner penuh membutuhkan koneksi library SheetJS; gunakan template tabular yang disediakan untuk tahap awal.'))};return !open?null:<div className="fixed inset-0 z-50 bg-slate-950/40 grid place-items-center p-4"><div className="bg-white rounded-xl shadow-xl w-full max-w-3xl p-5 space-y-4"><div className="flex justify-between"><h2 className="font-bold text-navy-900">Update Data Laporan</h2><button onClick={onClose}><X size={18}/></button></div><div className="grid sm:grid-cols-3 gap-3"><select className="border rounded-lg h-10 px-3 text-xs"><option>Semua Perusahaan</option><option>1001</option><option>Maison</option></select><input className="border rounded-lg h-10 px-3 text-xs" defaultValue={`${activeFilters.bulan} ${activeFilters.tahun}`}/><select className="border rounded-lg h-10 px-3 text-xs" value={mode} onChange={e=>setMode(e.target.value)}><option>Tambahkan data baru</option><option>Perbarui data yang sudah ada</option><option>Ganti seluruh data periode terpilih</option></select></div><div className="grid sm:grid-cols-2 gap-2"><button type="button" onClick={handleDownloadBalanceSheetWorkbook} className="h-9 px-3 border border-blue-200 bg-blue-50 text-navy-900 rounded-lg text-xs font-semibold hover:bg-blue-100 inline-flex items-center justify-center gap-2"><Download size={14}/>Download Template Neraca</button><button type="button" onClick={handleDownloadProfitLossWorkbook} className="h-9 px-3 border border-blue-200 bg-blue-50 text-navy-900 rounded-lg text-xs font-semibold hover:bg-blue-100 inline-flex items-center justify-center gap-2"><Download size={14}/>Download Template Laba Rugi</button></div><label className="border-2 border-dashed rounded-xl p-8 text-center block text-xs text-slate-500"><Upload className="mx-auto mb-2"/>Drag-and-drop file .xlsx/.xls atau Pilih File<input type="file" accept=".xlsx,.xls" className="hidden" onChange={e=>readFile(e.target.files?.[0])}/></label><button onClick={()=>preview?alert('Preview Data siap ditinjau.'):alert('Pilih file Excel terlebih dahulu.')} className="h-9 px-3 border rounded-lg text-xs">Preview Data</button><ImportValidationSummary preview={preview}/><ExcelPreviewTable preview={preview}/><div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg">Penyimpanan permanen belum dikonfigurasi. Data upload diproses melalui abstraction data service sementara dan siap dihubungkan ke API/database.</div><div className="flex justify-end gap-2"><button onClick={onClose} className="h-9 px-3 border rounded-lg text-xs">Batal</button><button onClick={()=>preview?alert(confirm('Ganti data lama sesuai mode update?')?'Data tervalidasi. KPI, tabel, grafik, dan analisa akan direfresh otomatis setelah API/database aktif.':'Dibatalkan'):alert('Preview Data terlebih dahulu.')} className="h-9 px-3 bg-brand text-white rounded-lg text-xs">Simpan Perubahan</button></div></div></div>}
 function UpdateDataButton(){const [open,setOpen]=useState(false);return <><button onClick={()=>setOpen(true)} className="btn-update"><RefreshCw size={14}/>Update Data</button><UpdateDataModal open={open} onClose={()=>setOpen(false)}/></>}
 function Actions({payload}:{payload:ReportPayload;title:string}){return <div className="flex flex-wrap gap-2"><ExportPdfButton payload={payload}/><ExportExcelButton payload={payload}/><UpdateDataButton/><button onClick={()=>window.print()} className="btn-secondary text-navy-900"><Printer size={14}/>Print</button></div>}
 
