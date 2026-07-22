@@ -1,0 +1,5 @@
+import type {AccurateCompany} from './types'
+export const ACCURATE_NOT_CONFIGURED_MESSAGE='Konfigurasi Accurate untuk perusahaan ini belum tersedia.'
+export function normalizeCompany(value:string|null):AccurateCompany{if(value==='1001'||value==='Maison')return value;throw new Error('Company tidak valid. Gunakan 1001 atau Maison.')}
+export function validateAccurateHost(host:string){const url=new URL(host.startsWith('http')?host:`https://${host}`);if(url.protocol!=='https:'||!url.hostname.endsWith('.accurate.id'))throw new Error('Host Accurate tidak valid.');return url.origin}
+export function getAccurateConfig(company:AccurateCompany){const prefix=company==='1001'?'ACCURATE_1001':'ACCURATE_MAISON';const apiToken=process.env[`${prefix}_API_TOKEN`];const signatureSecret=process.env[`${prefix}_SIGNATURE_SECRET`];const host=process.env[`${prefix}_HOST`];if(!apiToken||!signatureSecret||!host)return {ok:false as const,message:ACCURATE_NOT_CONFIGURED_MESSAGE};return {ok:true as const,company,apiToken,signatureSecret,host:validateAccurateHost(host)}}
