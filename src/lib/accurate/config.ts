@@ -1,4 +1,4 @@
-import type {AccurateCompany} from './types'
+import type {AccurateCompany} from './types.js'
 export const ACCURATE_NOT_CONFIGURED_MESSAGE='Konfigurasi Accurate untuk perusahaan ini belum tersedia.'
 export function normalizeCompany(value:string|null):AccurateCompany{if(value==='1001'||value==='Maison')return value;throw new Error('Company tidak valid. Gunakan 1001 atau Maison.')}
 export function validateAccurateHost(host:string){const url=new URL(host.startsWith('http')?host:`https://${host}`);if(url.protocol!=='https:'||!url.hostname.endsWith('.accurate.id'))throw new Error('Host Accurate tidak valid.');return url.origin}

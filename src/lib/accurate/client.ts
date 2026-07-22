@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
-import {getAccurateConfig,validateAccurateHost} from './config'
-import type {AccurateCompany} from './types'
+import {getAccurateConfig,validateAccurateHost} from './config.js'
+import type {AccurateCompany} from './types.js'
 const hostCache=new Map<AccurateCompany,string>()
 let active=0;const queue:(()=>void)[]=[]
 async function limited<T>(fn:()=>Promise<T>){if(active>=4)await new Promise<void>(r=>queue.push(r));active++;try{return await fn()}finally{active--;queue.shift()?.()}}
