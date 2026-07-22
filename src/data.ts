@@ -43,3 +43,14 @@ export const budgetService={
  status(row:BudgetRow){const pct=row.budget?row.actual/row.budget*100:0;return pct>100?'Over Budget':pct>=80?'Perhatian':'Aman'},
  realization(row:BudgetRow){return row.budget?row.actual/row.budget*100:0}
 }
+
+
+export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel';rows:{accountCode:string;accountName:string;category:string;subcategory:string;amount:number}[]}
+export const reportDataHistory:{company:string;period:string;reportType:string;rowCount:number;totalAmount:number;inputDate:string;source:'Manual'|'Upload Excel'}[]=[]
+export const reportDataService={
+ save(payload:ManualReportPayload){
+  reportDataHistory.unshift({company:payload.company,period:`${payload.month} ${payload.year}`,reportType:payload.reportType,rowCount:payload.rows.length,totalAmount:payload.rows.reduce((a,b)=>a+b.amount,0),inputDate:new Date().toISOString(),source:payload.source==='manual'?'Manual':'Upload Excel'})
+  return Promise.resolve({ok:true,payload})
+ },
+ history(){return reportDataHistory}
+}
