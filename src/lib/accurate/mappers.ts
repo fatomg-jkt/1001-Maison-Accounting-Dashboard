@@ -1,4 +1,4 @@
-import type {AccurateAccount,AccurateReportAmount,DashboardReportRow} from './types'
+import type {AccurateAccount,AccurateReportAmount,DashboardReportRow} from './types.js'
 const asset=['CASH_BANK','ACCOUNT_RECEIVABLE','INVENTORY','OTHER_CURRENT_ASSET','FIXED_ASSET','ACCUMULATED_DEPRECIATION','OTHER_ASSET']
 const liability=['ACCOUNT_PAYABLE','OTHER_CURRENT_LIABILITY','LONG_TERM_LIABILITY']
 const taxCodePrefixes=['230','240','250'];const taxName=/pajak|pph|ppn/i
