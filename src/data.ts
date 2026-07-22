@@ -45,11 +45,11 @@ export const budgetService={
 }
 
 
-export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number}[]}
+export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number}[]}
 export const reportDataHistory:{company:string;period:string;reportType:string;rowCount:number;totalAmount:number;inputDate:string;source:'Manual'|'Upload Excel'|'Accurate'}[]=[]
 export const reportDataService={
  save(payload:ManualReportPayload){
-  reportDataHistory.unshift({company:payload.company,period:`${payload.month} ${payload.year}`,reportType:payload.reportType,rowCount:payload.rows.length,totalAmount:payload.rows.reduce((a,b)=>a+b.amount,0),inputDate:new Date().toISOString(),source:payload.source==='accurate'?'Accurate':payload.source==='manual'?'Manual':'Upload Excel'})
+  reportDataHistory.unshift({company:payload.company,period:`${payload.month} ${payload.year}`,reportType:payload.reportType==='balance_sheet'?'Neraca':payload.reportType==='profit_loss'?'Laba Rugi':payload.reportType,rowCount:payload.rows.length,totalAmount:payload.rows.reduce((a,b)=>a+b.amount,0),inputDate:new Date().toISOString(),source:payload.source==='accurate'?'Accurate':payload.source==='manual'?'Manual':'Upload Excel'})
   return Promise.resolve({ok:true,payload})
  },
  history(){return reportDataHistory}
