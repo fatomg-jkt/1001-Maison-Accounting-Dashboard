@@ -46,7 +46,7 @@ export const budgetService={
 
 
 
-export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number}[]}
+export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string}[]}
 export type StoredReportRow=ManualReportPayload['rows'][number]&{reportType:'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;updatedAt:string;source:'manual'|'excel'|'accurate'}
 export const reportDataHistory:{company:string;period:string;reportType:string;rowCount:number;totalAmount:number;inputDate:string;source:'Manual'|'Upload Excel'|'Accurate'}[]=[]
 const reportStorageKey='maison-accounting-report-data'
@@ -61,8 +61,9 @@ export const reportDataService={
   const existing=readStoredRows()
   const samePeriod=(row:StoredReportRow)=>row.company===payload.company&&row.month===payload.month&&row.year===payload.year&&row.reportType===normalizedType
   const incoming=payload.rows.map(row=>({...row,reportType:normalizedType,company:payload.company,month:payload.month,year:payload.year,updatedAt:inputDate,source:payload.source}))
-  const incomingByAccount=new Map(incoming.map(row=>[row.accountCode,row]))
-  const untouched=payload.uploadMode==='replace'||payload.uploadMode==='Ganti data periode ini'?existing.filter(row=>!samePeriod(row)):existing.filter(row=>!(samePeriod(row)&&incomingByAccount.has(row.accountCode)))
+  const normalizeDepartment=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase()
+  const incomingByAccount=new Map(incoming.map(row=>[`${row.accountCode}-${normalizeDepartment(row.department)}`,row]))
+  const untouched=payload.uploadMode==='replace'||payload.uploadMode==='Ganti data periode ini'?existing.filter(row=>!samePeriod(row)):existing.filter(row=>!(samePeriod(row)&&incomingByAccount.has(`${row.accountCode}-${normalizeDepartment(row.department)}`)))
   writeStoredRows([...untouched,...incoming])
   reportDataHistory.unshift({company:payload.company,period:`${payload.month} ${payload.year}`,reportType:normalizedType==='balance_sheet'?'Neraca':'Laba Rugi',rowCount:payload.rows.length,totalAmount:payload.rows.reduce((a,b)=>a+b.amount,0),inputDate,source:payload.source==='accurate'?'Accurate':payload.source==='manual'?'Manual':'Upload Excel'})
   return Promise.resolve({ok:true,payload})
