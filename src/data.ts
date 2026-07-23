@@ -7,7 +7,7 @@ export const kpis = [
 ]
 export const assetMix=[{name:'Kas & Bank',value:22},{name:'Piutang',value:16},{name:'Persediaan',value:12},{name:'Aset Tetap',value:38},{name:'Lainnya',value:12}]
 export const liabilityMix=[{name:'Hutang Usaha',value:34},{name:'Hutang Pajak',value:14},{name:'Jangka Panjang',value:39},{name:'Lainnya',value:13}]
-export const departments=[{name:'Operasional',value:1480},{name:'Marketing',value:960},{name:'General Affairs',value:720},{name:'Human Capital',value:590},{name:'IT',value:410}]
+export const departments=[{name:'HRD',value:590},{name:'Operasional',value:1480},{name:'Merchandise',value:720},{name:'Development',value:410},{name:'Marketing',value:960},{name:'Purchasing',value:520},{name:'FAT',value:650},{name:'Warehouse',value:480},{name:'Management Kiki',value:360},{name:'Management Uma',value:340}]
 export const accounts=[{name:'Beban Bahan Baku',type:'Beban',value:865000000},{name:'Beban Gaji',type:'Beban',value:620000000},{name:'Beban Pemasaran',type:'Beban',value:435000000},{name:'Pendapatan Retail',type:'Pendapatan',value:2450000000},{name:'Pendapatan Wholesale',type:'Pendapatan',value:1820000000},{name:'Pendapatan Online',type:'Pendapatan',value:1470000000}]
 export const balanceRows=[
  {label:'ASSET',kind:'title'},{label:'Asset Lancar',kind:'section'},{label:'Kas',value:1580000000},{label:'Bank',value:3900000000},{label:'Piutang',value:3920000000},{label:'Persediaan',value:2860000000},{label:'Uang Muka',value:430000000},{label:'Pajak Dibayar Dimuka',value:310000000},{label:'Total Asset Lancar',value:13000000000,kind:'total'},
@@ -23,14 +23,14 @@ export type BudgetRow={company:BudgetCompany;tahun:number;bulan:BudgetMonth;depa
 export const budgetRows:BudgetRow[]=[
  {company:'1001',tahun:2026,bulan:'Juni',department:'Operasional',costCenter:'OPS-01',kodeAkun:'6101',namaAkun:'Beban Bahan Baku',kategoriAkun:'COGS',budget:920000000,actual:875000000},
  {company:'1001',tahun:2026,bulan:'Juni',department:'Marketing',costCenter:'MKT-01',kodeAkun:'6201',namaAkun:'Iklan Digital',kategoriAkun:'OPEX',budget:350000000,actual:382000000},
- {company:'1001',tahun:2026,bulan:'Juni',department:'General Affairs',costCenter:'GA-01',kodeAkun:'6301',namaAkun:'Sewa Kantor',kategoriAkun:'OPEX',budget:210000000,actual:174000000},
- {company:'1001',tahun:2026,bulan:'Juni',department:'Human Capital',costCenter:'HC-01',kodeAkun:'6401',namaAkun:'Gaji & Benefit',kategoriAkun:'OPEX',budget:480000000,actual:395000000},
- {company:'1001',tahun:2026,bulan:'Juni',department:'IT',costCenter:'IT-01',kodeAkun:'6501',namaAkun:'Lisensi Software',kategoriAkun:'OPEX',budget:110000000,actual:132000000},
+ {company:'1001',tahun:2026,bulan:'Juni',department:'Merchandise',costCenter:'GA-01',kodeAkun:'6301',namaAkun:'Sewa Kantor',kategoriAkun:'OPEX',budget:210000000,actual:174000000},
+ {company:'1001',tahun:2026,bulan:'Juni',department:'HRD',costCenter:'HC-01',kodeAkun:'6401',namaAkun:'Gaji & Benefit',kategoriAkun:'OPEX',budget:480000000,actual:395000000},
+ {company:'1001',tahun:2026,bulan:'Juni',department:'Development',costCenter:'IT-01',kodeAkun:'6501',namaAkun:'Lisensi Software',kategoriAkun:'OPEX',budget:110000000,actual:132000000},
  {company:'Maison',tahun:2026,bulan:'Juni',department:'Operasional',costCenter:'OPS-02',kodeAkun:'6101',namaAkun:'Beban Bahan Baku',kategoriAkun:'COGS',budget:1050000000,actual:820000000},
  {company:'Maison',tahun:2026,bulan:'Juni',department:'Marketing',costCenter:'MKT-02',kodeAkun:'6202',namaAkun:'Event & Promotion',kategoriAkun:'OPEX',budget:290000000,actual:268000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'General Affairs',costCenter:'GA-02',kodeAkun:'6302',namaAkun:'Utility',kategoriAkun:'OPEX',budget:165000000,actual:172000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'Human Capital',costCenter:'HC-02',kodeAkun:'6402',namaAkun:'Training',kategoriAkun:'OPEX',budget:85000000,actual:52000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'IT',costCenter:'IT-02',kodeAkun:'6502',namaAkun:'Cloud Infrastructure',kategoriAkun:'OPEX',budget:145000000,actual:116000000},
+ {company:'Maison',tahun:2026,bulan:'Juni',department:'Merchandise',costCenter:'GA-02',kodeAkun:'6302',namaAkun:'Utility',kategoriAkun:'OPEX',budget:165000000,actual:172000000},
+ {company:'Maison',tahun:2026,bulan:'Juni',department:'HRD',costCenter:'HC-02',kodeAkun:'6402',namaAkun:'Training',kategoriAkun:'OPEX',budget:85000000,actual:52000000},
+ {company:'Maison',tahun:2026,bulan:'Juni',department:'Development',costCenter:'IT-02',kodeAkun:'6502',namaAkun:'Cloud Infrastructure',kategoriAkun:'OPEX',budget:145000000,actual:116000000},
  {company:'1001',tahun:2026,bulan:'Mei',department:'Operasional',costCenter:'OPS-01',kodeAkun:'6101',namaAkun:'Beban Bahan Baku',kategoriAkun:'COGS',budget:880000000,actual:790000000},
  {company:'Maison',tahun:2026,bulan:'Mei',department:'Marketing',costCenter:'MKT-02',kodeAkun:'6202',namaAkun:'Event & Promotion',kategoriAkun:'OPEX',budget:260000000,actual:231000000}
 ]
@@ -53,7 +53,7 @@ const reportStorageKey='maison-accounting-report-data'
 const normalizeReportType=(reportType:ManualReportPayload['reportType']):StoredReportRow['reportType']=>reportType==='Neraca'||reportType==='balance_sheet'?'balance_sheet':'profit_loss'
 const readStoredRows=():StoredReportRow[]=>{try{return JSON.parse(localStorage.getItem(reportStorageKey)??'[]') as StoredReportRow[]}catch{return []}}
 const writeStoredRows=(rows:StoredReportRow[])=>{localStorage.setItem(reportStorageKey,JSON.stringify(rows));window.dispatchEvent(new CustomEvent('report-data-updated',{detail:{key:reportStorageKey}}))}
-export type ReportPeriodFilter={company:'all'|'1001'|'Maison';month:string;year:number;reportType:'balance_sheet'|'profit_loss'}
+export type ReportPeriodFilter={company:'all'|'1001'|'Maison';month:string;year:number;reportType:'balance_sheet'|'profit_loss';department?:string}
 export const reportDataService={
  save(payload:ManualReportPayload){
   const normalizedType=normalizeReportType(payload.reportType)
@@ -68,6 +68,6 @@ export const reportDataService={
   return Promise.resolve({ok:true,payload})
  },
  list(){return readStoredRows()},
- getPeriod(filter:ReportPeriodFilter){return readStoredRows().filter(row=>(filter.company==='all'||row.company===filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType)},
+ getPeriod(filter:ReportPeriodFilter){const normalize=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();return readStoredRows().filter(row=>(filter.company==='all'||row.company===filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType&&(!filter.department||normalize(filter.department??'')===normalize('Semua Department')||normalize((row as StoredReportRow&{department?:string}).department)===normalize(filter.department??'')))},
  history(){return reportDataHistory}
 }
