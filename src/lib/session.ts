@@ -1,4 +1,5 @@
-import type {SessionUser} from './financial-access'
+import {useEffect,useState} from 'react'
+import {canAccessNeracaAndLabaRugi,type SessionUser} from './financial-access'
 
 declare global{interface Window{__USER__?:SessionUser;__SESSION__?:{user?:SessionUser}}}
 
@@ -16,4 +17,26 @@ export function getCurrentUser():SessionUser|null{
     if(user)return user
   }
   return null
+}
+
+export function useCurrentSession(){
+  const [session,setSession]=useState<{user:SessionUser|null;loading:boolean}>({user:null,loading:true})
+  useEffect(()=>setSession({user:getCurrentUser(),loading:false}),[])
+  return session
+}
+
+export function useFinancialReportAccess(){
+  const {user,loading:sessionLoading}=useCurrentSession()
+  const [serverAccess,setServerAccess]=useState<boolean|null>(null)
+  useEffect(()=>{
+    if(sessionLoading)return
+    if(canAccessNeracaAndLabaRugi(user)){setServerAccess(true);return}
+    const controller=new AbortController()
+    fetch('/api/financial-report-access',{credentials:'same-origin',signal:controller.signal})
+      .then(response=>response.ok?response.json():Promise.reject())
+      .then((result:{allowed?:boolean})=>setServerAccess(result.allowed===true))
+      .catch(()=>{if(!controller.signal.aborted)setServerAccess(false)})
+    return ()=>controller.abort()
+  },[sessionLoading,user])
+  return {user,loading:sessionLoading||serverAccess===null,allowed:serverAccess===true}
 }
