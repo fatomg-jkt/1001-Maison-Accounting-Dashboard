@@ -8,6 +8,8 @@ export type SessionUser={
   department?:string|{name?:string|null}|null
 }
 
+export type VerifiedSession={user?:SessionUser|null;data?:{user?:SessionUser|null}|null}
+
 export const ALLOWED_FINANCIAL_REPORT_EMAILS=['fat@1001official.com','uma@1001official.com'] as const
 
 export function normalizeEmail(value:unknown){return String(value??'').trim().toLowerCase()}
@@ -17,7 +19,7 @@ export function canAccessNeracaAndLabaRugi(user:SessionUser|null|undefined){
   return ALLOWED_FINANCIAL_REPORT_EMAILS.some(allowedEmail=>allowedEmail===email)
 }
 
-export function getSessionUser(req:{user?:SessionUser;session?:{user?:SessionUser};auth?:{user?:SessionUser}}):SessionUser|null{
+export function getSessionUser(req:{user?:SessionUser;session?:VerifiedSession;auth?:VerifiedSession}):SessionUser|null{
   // Only identities attached by the server authentication integration are trusted.
-  return req.user??req.session?.user??req.auth?.user??null
+  return req.user??req.session?.user??req.session?.data?.user??req.auth?.user??req.auth?.data?.user??null
 }
