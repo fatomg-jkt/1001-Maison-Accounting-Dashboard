@@ -1,3 +1,4 @@
+import {useEffect,useState} from 'react'
 import type {SessionUser} from './financial-access'
 
 declare global{interface Window{__USER__?:SessionUser;__SESSION__?:{user?:SessionUser}}}
@@ -16,4 +17,10 @@ export function getCurrentUser():SessionUser|null{
     if(user)return user
   }
   return null
+}
+
+export function useCurrentUser(){
+  const [user,setUser]=useState<SessionUser|null|undefined>(undefined)
+  useEffect(()=>setUser(getCurrentUser()),[])
+  return {user,loading:user===undefined}
 }
