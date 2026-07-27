@@ -4,22 +4,32 @@ export type SessionUser={
   email?:string|null
   role?:string|null
   department?:string|{name?:string|null}|null
+  departmentName?:string|null
+  profile?:{department?:string|{name?:string|null}|null}|null
 }
 
-const MANAGEMENT_DEPARTMENTS=new Set(['management','management kiki','management uma'])
-const normalize=(value:unknown)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase()
+const ALLOWED_DEPARTMENTS=new Set([
+  'finance accounting department',
+  'finance accounting',
+  'management uma',
+  'management kiki',
+])
 
-export function canAccessFinancialStatements(user:SessionUser|null|undefined,ownerEmail?:string|null){
-  if(!user)return false
-  const email=normalize(user.email)
-  const department=normalize(typeof user.department==='string'?user.department:user.department?.name)
-  return Boolean((email&&email===normalize(ownerEmail))||normalize(user.role)==='owner'||MANAGEMENT_DEPARTMENTS.has(department))
+export const normalizeDepartment=(value:unknown)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase()
+
+function departmentValue(user:SessionUser){
+  const direct=typeof user.department==='object'&&user.department!==null?user.department.name:user.department
+  const profile=typeof user.profile?.department==='object'&&user.profile.department!==null?user.profile.department.name:user.profile?.department
+  return direct??user.departmentName??profile
 }
 
-export function getSessionUser(req:{user?:SessionUser;session?:{user?:SessionUser};auth?:{user?:SessionUser};headers?:Record<string,string|string[]|undefined>}):SessionUser|null{
-  const authenticated=req.user??req.session?.user??req.auth?.user
-  if(authenticated)return authenticated
-  const header=(name:string)=>{const value=req.headers?.[name];return Array.isArray(value)?value[0]:value}
-  const id=header('x-user-id'),email=header('x-user-email'),role=header('x-user-role'),department=header('x-user-department')
-  return id||email||role||department?{id,email,role,department}:null
+/** The single access policy for Neraca and Laba Rugi. Roles never grant access. */
+export function canAccessNeracaAndLabaRugi(user:SessionUser|null|undefined){
+  return Boolean(user&&ALLOWED_DEPARTMENTS.has(normalizeDepartment(departmentValue(user))))
+}
+
+export function getSessionUser(req:{user?:SessionUser;session?:{user?:SessionUser};auth?:{user?:SessionUser}}):SessionUser|null{
+  // These values must be populated by the application's verified server session middleware.
+  // Never accept identity/department headers or request input supplied by the browser.
+  return req.user??req.session?.user??req.auth?.user??null
 }
