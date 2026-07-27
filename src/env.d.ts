@@ -1,1 +1,1 @@
-declare const __OWNER_EMAIL__:string
+/// <reference types="vite/client" />
