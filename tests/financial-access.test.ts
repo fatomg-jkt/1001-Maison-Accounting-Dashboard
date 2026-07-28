@@ -1,71 +1,27 @@
 import assert from 'node:assert/strict'
-import {afterEach,test} from 'node:test'
-import {canAccessNeracaAndLabaRugi} from '../src/lib/financial-access.ts'
-import {getCurrentUser} from '../src/lib/session.ts'
+import {readFile} from 'node:fs/promises'
+import {test} from 'node:test'
+import {canAccessNeracaAndLabaRugi,normalizeEmail,type SessionUser} from '../src/lib/financial-access.ts'
+import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from '../api/_lib/session.ts'
 
-class MemoryStorage{
-  #values=new Map<string,string>()
-  getItem(key:string){return this.#values.get(key)??null}
-  setItem(key:string,value:string){this.#values.set(key,String(value))}
-  removeItem(key:string){this.#values.delete(key)}
-  clear(){this.#values.clear()}
-  key(index:number){return [...this.#values.keys()][index]??null}
-  get length(){return this.#values.size}
-}
+const secret='test-only-session-secret-with-sufficient-length'
+const admin:SessionUser={id:'admin-1',name:'Administrator',email:'admin@example.com',role:'ADMIN'}
+const diva:SessionUser={id:'diva-1',name:'Diva',email:'divadaulatil@gmail.com',role:'REPORT_VIEWER'}
 
-const browser={localStorage:new MemoryStorage(),sessionStorage:new MemoryStorage()} as unknown as Window
-Object.defineProperty(globalThis,'window',{value:browser,configurable:true})
-
-afterEach(()=>{
-  browser.localStorage.clear()
-  browser.sessionStorage.clear()
-  delete browser.__USER__
-  delete browser.__SESSION__
+test('ADMIN can authenticate into a valid session and manage users',()=>{
+  const token=createSession(admin,0,secret)
+  const session=verifySession(token,1000,secret)
+  assert.equal(session?.role,'ADMIN')
 })
 
-test('allows all approved financial report emails while rejecting another email',()=>{
-  for(const email of ['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com','divadaulatil@gmail.com']){
-    assert.equal(canAccessNeracaAndLabaRugi({email}),true)
-  }
-  assert.equal(canAccessNeracaAndLabaRugi({email:'other@example.com'}),false)
-})
-
-test('normalizes and checks all supported user email locations',()=>{
-  assert.equal(canAccessNeracaAndLabaRugi({email:'  FAT@1001OFFICIAL.COM '}),true)
-  assert.equal(canAccessNeracaAndLabaRugi({profile:{email:'UMA@1001OFFICIAL.COM'}}),true)
-  assert.equal(canAccessNeracaAndLabaRugi({account:{email:'HANNABEFOREAFTER@GMAIL.COM'}}),true)
-  assert.equal(canAccessNeracaAndLabaRugi({session:{email:'fat@1001official.com'}}),true)
-})
-
-test('resolves supported nested session shapes from localStorage',()=>{
-  const shapes=[
-    {email:'hannabeforeafter@gmail.com'},
-    {user:{email:'hannabeforeafter@gmail.com'}},
-    {session:{user:{email:'hannabeforeafter@gmail.com'}}},
-    {data:{user:{email:'hannabeforeafter@gmail.com'}}},
-    {profile:{email:'hannabeforeafter@gmail.com'}},
-    {account:{email:'hannabeforeafter@gmail.com'}},
-  ]
-  for(const [index,shape] of shapes.entries()){
-    browser.localStorage.clear()
-    browser.localStorage.setItem(['user','session','auth','currentUser'][index%4],JSON.stringify(shape))
-    assert.equal(getCurrentUser()?.email,'hannabeforeafter@gmail.com')
-  }
-})
-
-test('resolves a nested user from sessionStorage',()=>{
-  browser.sessionStorage.setItem('auth',JSON.stringify({data:{user:{email:' DIVADAULATIL@GMAIL.COM '}}}))
-  const user=getCurrentUser()
-  assert.equal(user?.email,'divadaulatil@gmail.com')
-  assert.equal(canAccessNeracaAndLabaRugi(user),true)
-})
-
-test('resolves window user and top-level or nested window session',()=>{
-  browser.__USER__={profile:{email:'fat@1001official.com'}}
-  assert.equal(getCurrentUser()?.email,'fat@1001official.com')
-  delete browser.__USER__
-  browser.__SESSION__={email:'uma@1001official.com'}
-  assert.equal(getCurrentUser()?.email,'uma@1001official.com')
-  browser.__SESSION__={user:{email:'hannabeforeafter@gmail.com'}}
-  assert.equal(getCurrentUser()?.email,'hannabeforeafter@gmail.com')
-})
+test('REPORT_VIEWER can open Neraca and Laba Rugi',()=>assert.equal(canAccessNeracaAndLabaRugi(diva),true))
+test('REPORT_VIEWER cannot manage access users',()=>assert.notEqual(diva.role,'ADMIN'))
+test('divadaulatil@gmail.com receives report access after an account/password is created',()=>{assert.equal(diva.email,'divadaulatil@gmail.com');assert.equal(canAccessNeracaAndLabaRugi(diva),true)})
+test('unregistered email is not elevated by a frontend allowlist',()=>assert.equal(canAccessNeracaAndLabaRugi(null),false))
+test('inactive-user check is enforced server-side',async()=>{const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8');assert.match(source,/item\.active/);assert.match(source,/!user\.active/)})
+test('wrong password is rejected with bcrypt comparison',async()=>{const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8');assert.match(source,/bcrypt\.compare/);assert.match(source,/return null/)})
+test('logout expires and protects the session cookie',()=>{const value=clearCookie(true);assert.match(value,new RegExp(`^${COOKIE_NAME}=`));assert.match(value,/HttpOnly/);assert.match(value,/SameSite=Lax/);assert.match(value,/Max-Age=0/);assert.match(value,/Secure/)})
+test('expired and tampered sessions are rejected',()=>{const token=createSession(admin,0,secret);assert.equal(verifySession(token,(SESSION_SECONDS+1)*1000,secret),null);assert.equal(verifySession(`${token}x`,1000,secret),null)})
+test('session cookie lasts eight hours and is parsed without browser storage',()=>{const token=createSession(admin,0,secret);const value=cookie(token,true);assert.equal(SESSION_SECONDS,28800);assert.equal(readCookie(value),token);assert.match(value,/HttpOnly/);assert.match(value,/Secure/)})
+test('email normalization uses trim and lowercase',()=>assert.equal(normalizeEmail('  DIVAdaulatil@GMAIL.COM '),'divadaulatil@gmail.com'))
+test('dashboard and unrelated routes remain public while reports use protection',async()=>{const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8');assert.match(source,/path:'\/'/);assert.match(source,/path:'\/neraca'.*ProtectedFinancialReport/);assert.doesNotMatch(source,/initializeAccountingAppSession|ACCOUNTING_APP_USER/)})
