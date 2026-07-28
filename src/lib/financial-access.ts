@@ -9,7 +9,7 @@ export type SessionUser={
   department?:string|{name?:string|null}|null
 }
 
-export const ALLOWED_FINANCIAL_REPORT_EMAILS=['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com'] as const
+export const ALLOWED_FINANCIAL_REPORT_EMAILS=['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com','divadaulatil@gmail.com'] as const
 
 export function normalizeEmail(value:unknown){return String(value??'').trim().toLowerCase()}
 
