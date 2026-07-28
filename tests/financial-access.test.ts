@@ -24,7 +24,7 @@ afterEach(()=>{
 })
 
 test('allows all approved financial report emails while rejecting another email',()=>{
-  for(const email of ['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com']){
+  for(const email of ['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com','divadaulatil@gmail.com']){
     assert.equal(canAccessNeracaAndLabaRugi({email}),true)
   }
   assert.equal(canAccessNeracaAndLabaRugi({email:'other@example.com'}),false)
@@ -54,8 +54,10 @@ test('resolves supported nested session shapes from localStorage',()=>{
 })
 
 test('resolves a nested user from sessionStorage',()=>{
-  browser.sessionStorage.setItem('auth',JSON.stringify({data:{user:{email:' UMA@1001OFFICIAL.COM '}}}))
-  assert.equal(getCurrentUser()?.email,'uma@1001official.com')
+  browser.sessionStorage.setItem('auth',JSON.stringify({data:{user:{email:' DIVADAULATIL@GMAIL.COM '}}}))
+  const user=getCurrentUser()
+  assert.equal(user?.email,'divadaulatil@gmail.com')
+  assert.equal(canAccessNeracaAndLabaRugi(user),true)
 })
 
 test('resolves window user and top-level or nested window session',()=>{
