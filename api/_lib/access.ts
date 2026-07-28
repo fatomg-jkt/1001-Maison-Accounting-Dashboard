@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
-import {del,list,put} from '@vercel/blob'
+import {get,put} from '@vercel/blob'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from './session.js'
 
 export type AccessRole='ADMIN'|'REPORT_VIEWER'
@@ -15,10 +15,9 @@ export function configurationError(){const missing=['SESSION_SECRET','ACCESS_ADM
 
 export async function loadUsers():Promise<AccessUser[]>{
   const error=configurationError();if(error)throw new Error(error)
-  const blobs=await list({prefix:'financial-access-users.json',token:process.env.BLOB_READ_WRITE_TOKEN})
-  const blob=blobs.blobs.find(item=>item.pathname==='financial-access-users.json')
+  const blob=await get('financial-access-users.json',{access:'private',token:process.env.BLOB_READ_WRITE_TOKEN,useCache:false})
   let users:AccessUser[]=[]
-  if(blob){const response=await fetch(blob.downloadUrl,{cache:'no-store'});if(!response.ok)throw new Error('Data pengguna tidak dapat dibaca dari Vercel Blob.');users=((await response.json()) as {users?:AccessUser[]}).users??[]}
+  if(blob){users=((await new Response(blob.stream).json()) as {users?:AccessUser[]}).users??[]}
   const adminEmail=normalizeEmail(process.env.ACCESS_ADMIN_EMAIL)
   let changed=false
   if(!users.some(user=>user.email===adminEmail)){
@@ -29,9 +28,7 @@ export async function loadUsers():Promise<AccessUser[]>{
   return users
 }
 export async function saveUsers(users:AccessUser[]){
-  const existing=await list({prefix:'financial-access-users.json',token:process.env.BLOB_READ_WRITE_TOKEN})
-  await Promise.all(existing.blobs.filter(item=>item.pathname==='financial-access-users.json').map(item=>del(item.url,{token:process.env.BLOB_READ_WRITE_TOKEN})))
-  await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,token:process.env.BLOB_READ_WRITE_TOKEN})
+  await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token:process.env.BLOB_READ_WRITE_TOKEN})
 }
 export async function authenticate(email:unknown,password:unknown){const users=await loadUsers();const user=users.find(item=>item.email===normalizeEmail(email));if(!user||!user.active||!await bcrypt.compare(String(password??''),user.passwordHash))return null;return user}
 export async function activeSession(req:{headers?:{cookie?:string}},now=Date.now()){const session=verifySession(readCookie(req.headers?.cookie),now);if(!session)return null;const user=(await loadUsers()).find(item=>item.id===session.id&&item.email===session.email&&item.active);return user&&user.role===session.role?user:null}
