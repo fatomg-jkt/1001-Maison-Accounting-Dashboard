@@ -23,8 +23,8 @@ afterEach(()=>{
   delete browser.__SESSION__
 })
 
-test('allows Hanna, FAT, and Uma while rejecting another email',()=>{
-  for(const email of ['hannabeforeafter@gmail.com','fat@1001official.com','uma@1001official.com']){
+test('allows all approved financial report emails while rejecting another email',()=>{
+  for(const email of ['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com']){
     assert.equal(canAccessNeracaAndLabaRugi({email}),true)
   }
   assert.equal(canAccessNeracaAndLabaRugi({email:'other@example.com'}),false)
