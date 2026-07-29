@@ -4,6 +4,7 @@ import {test} from 'node:test'
 import {canAccessNeracaAndLabaRugi,normalizeEmail,type SessionUser} from '../src/lib/financial-access.ts'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from '../api/_lib/session.ts'
 import {LOGIN_SERVER_ERROR,readLoginResponse} from '../src/lib/login-response.ts'
+import {safeLoginRedirect} from '../src/lib/session.ts'
 
 const secret='test-only-session-secret-with-sufficient-length'
 const admin:SessionUser={id:'admin-1',name:'Administrator',email:'admin@example.com',role:'ADMIN'}
@@ -32,13 +33,15 @@ test('a missing private user blob starts with an empty user collection',async()=
   const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8')
   assert.match(source,/if\(blob===null\)return \[\]/)
 })
-test('an empty store seeds only the configured ADMIN',async()=>{
+test('an empty store seeds the configured ADMIN and the two hashed demo accounts',async()=>{
   const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8')
   assert.match(source,/if\(users\.length===0\)/)
   assert.match(source,/normalizeEmail\(process\.env\.ACCESS_ADMIN_EMAIL\)/)
   assert.match(source,/bcrypt\.hash\(process\.env\.ACCESS_ADMIN_PASSWORD!,12\)/)
   assert.match(source,/role:'ADMIN'/)
-  assert.doesNotMatch(source,/for\(const email of INITIAL_EMAILS\)/)
+  assert.match(source,/accounting\.demo@1001maison\.com/)
+  assert.match(source,/management\.demo@1001maison\.com/)
+  assert.doesNotMatch(source,/Accounting1001!2026|Management1001!2026/)
 })
 test('a null Blob stream is rejected before reading',async()=>{const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8');assert.match(source,/if\(blob\.stream===null\)throw/)})
 test('an empty Blob response produces an empty user collection',async()=>{const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8');assert.match(source,/if\(!text\.trim\(\)\)return \[\]/)})
@@ -59,4 +62,11 @@ test('logout expires and protects the session cookie',()=>{const value=clearCook
 test('expired and tampered sessions are rejected',()=>{const token=createSession(admin,0,secret);assert.equal(verifySession(token,(SESSION_SECONDS+1)*1000,secret),null);assert.equal(verifySession(`${token}x`,1000,secret),null)})
 test('session cookie lasts eight hours and is parsed without browser storage',()=>{const token=createSession(admin,0,secret);const value=cookie(token,true);assert.equal(SESSION_SECONDS,28800);assert.equal(readCookie(value),token);assert.match(value,/HttpOnly/);assert.match(value,/Secure/)})
 test('email normalization uses trim and lowercase',()=>assert.equal(normalizeEmail('  DIVAdaulatil@GMAIL.COM '),'divadaulatil@gmail.com'))
+test('login redirect preserves safe internal destinations and rejects external or recursive redirects',()=>{
+  assert.equal(safeLoginRedirect('/budgeting/department?year=2026'),'/budgeting/department?year=2026')
+  assert.equal(safeLoginRedirect('https://example.com'),'/')
+  assert.equal(safeLoginRedirect('//example.com'),'/')
+  assert.equal(safeLoginRedirect('/login?redirect=/settings'),'/')
+  assert.equal(safeLoginRedirect(null),'/')
+})
 test('dashboard and unrelated routes remain public while reports use protection',async()=>{const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8');assert.match(source,/path:'\/'/);assert.match(source,/path:'\/neraca'.*ProtectedFinancialReport/);assert.doesNotMatch(source,/initializeAccountingAppSession|ACCOUNTING_APP_USER/)})
