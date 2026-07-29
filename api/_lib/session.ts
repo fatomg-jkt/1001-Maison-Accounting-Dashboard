@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 
-export type SessionRole='ADMIN'|'REPORT_VIEWER'
+export type SessionRole='SUPER_ADMIN'|'ACCOUNTING'|'MANAGEMENT'
 export type SessionIdentity={id:string;email:string;role:SessionRole}
 export type SessionPayload=SessionIdentity&{exp:number}
 export const COOKIE_NAME='maison_financial_session'

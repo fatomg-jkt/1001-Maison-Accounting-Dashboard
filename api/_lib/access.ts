@@ -3,21 +3,22 @@ import bcrypt from 'bcryptjs'
 import {get,put} from '@vercel/blob'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from './session.js'
 
-export type AccessRole='ADMIN'|'REPORT_VIEWER'
+export type AccessRole='SUPER_ADMIN'|'ACCOUNTING'|'MANAGEMENT'
 export type AccessUser={id:string;name:string;email:string;passwordHash:string;role:AccessRole;active:boolean;createdAt:string;updatedAt:string}
 export type PublicUser=Omit<AccessUser,'passwordHash'|'active'|'createdAt'|'updatedAt'>
 type UserBlob={statusCode:number;stream:BodyInit|null}
 
 export {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession}
-const DEMO_USERS:ReadonlyArray<Pick<AccessUser,'name'|'email'|'passwordHash'|'role'>>=[
-  {name:'Accounting Demo',email:'accounting.demo@1001maison.com',passwordHash:'$2b$12$kox0ohZzbgZnbw3iPTP4zehPJfHhep8oip9Q8y.lvJA3nt8UpBQ5a',role:'REPORT_VIEWER'},
-  {name:'Management Demo',email:'management.demo@1001maison.com',passwordHash:'$2b$12$P.ytiQnCuyUXnfqVz2DWeeyedMWDxAtlT821OPVIJZ.tJmfWmKVC6',role:'ADMIN'},
-]
+const CONFIGURED_USERS=[
+  {name:'Super Admin',email:'superadmin@1001maison.test',passwordKey:'SUPER_ADMIN_PASSWORD',role:'SUPER_ADMIN'},
+  {name:'Accounting',email:'accounting@1001maison.test',passwordKey:'ACCOUNTING_PASSWORD',role:'ACCOUNTING'},
+  {name:'Management',email:'management@1001maison.test',passwordKey:'MANAGEMENT_PASSWORD',role:'MANAGEMENT'},
+] as const
 export const INITIAL_EMAILS=['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com','divadaulatil@gmail.com']
 export const normalizeEmail=(value:unknown)=>String(value??'').trim().toLowerCase()
 export const validEmail=(email:string)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 export const publicUser=(user:AccessUser):PublicUser=>({id:user.id,name:user.name,email:user.email,role:user.role})
-export function configurationError(){const missing=['SESSION_SECRET','ACCESS_ADMIN_EMAIL','ACCESS_ADMIN_PASSWORD','BLOB_READ_WRITE_TOKEN'].filter(key=>!process.env[key]);return missing.length?`Konfigurasi server belum lengkap: ${missing.join(', ')}.`:null}
+export function configurationError(){const missing=['SESSION_SECRET','SUPER_ADMIN_PASSWORD','ACCOUNTING_PASSWORD','MANAGEMENT_PASSWORD','BLOB_READ_WRITE_TOKEN'].filter(key=>!process.env[key]);return missing.length?`Konfigurasi server belum lengkap: ${missing.join(', ')}.`:null}
 
 export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
   if(blob===null)return []
@@ -34,18 +35,14 @@ export async function loadUsers():Promise<AccessUser[]>{
   const blob=await get('financial-access-users.json',{access:'private',token:process.env.BLOB_READ_WRITE_TOKEN,useCache:false})
   const users=await readUsersBlob(blob)
   let changed=false
-  if(users.length===0){
-    const now=new Date().toISOString()
-    users.push({id:crypto.randomUUID(),name:'Access Administrator',email:normalizeEmail(process.env.ACCESS_ADMIN_EMAIL),passwordHash:await bcrypt.hash(process.env.ACCESS_ADMIN_PASSWORD!,12),role:'ADMIN',active:true,createdAt:now,updatedAt:now})
-    changed=true
-  }
-  for(const demo of DEMO_USERS){
-    const existing=users.find(user=>user.email===demo.email)
+  for(const configured of CONFIGURED_USERS){
+    const password=process.env[configured.passwordKey]!
+    const existing=users.find(user=>user.email===configured.email)
     if(existing){
-      if(existing.passwordHash!==demo.passwordHash||existing.role!==demo.role||!existing.active){Object.assign(existing,demo,{active:true,updatedAt:new Date().toISOString()});changed=true}
+      if(existing.role!==configured.role||!existing.active||!await bcrypt.compare(password,existing.passwordHash)){Object.assign(existing,{name:configured.name,role:configured.role,active:true,passwordHash:await bcrypt.hash(password,12),updatedAt:new Date().toISOString()});changed=true}
     }else{
       const now=new Date().toISOString()
-      users.push({id:crypto.randomUUID(),...demo,active:true,createdAt:now,updatedAt:now});changed=true
+      users.push({id:crypto.randomUUID(),name:configured.name,email:configured.email,passwordHash:await bcrypt.hash(password,12),role:configured.role,active:true,createdAt:now,updatedAt:now});changed=true
     }
   }
   if(changed)await saveUsers(users)
