@@ -2,6 +2,10 @@
 
 Financial Dashboard for 1001 & Maison Group including Profit & Loss, Balance Sheet, Cashflow, Budgeting and Financial Analytics.
 
+## Vercel routing
+
+The dashboard is a client-side SPA. `vercel.json` preserves `/api/*` for Vercel Functions and rewrites all other paths to `index.html`, so routes such as `/login` can be opened directly or refreshed without returning a Vercel 404.
+
 ## Authentication and roles
 
 Every dashboard route is protected by an eight-hour, signed, HttpOnly session cookie. User records and bcrypt password hashes are kept in the private Vercel Blob `financial-access-users.json`; passwords are never sent back to the browser.
