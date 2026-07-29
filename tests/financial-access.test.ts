@@ -79,4 +79,20 @@ test('login redirect preserves safe internal destinations and rejects external o
   assert.equal(safeLoginRedirect('/login?redirect=/settings'),'/')
   assert.equal(safeLoginRedirect(null),'/')
 })
-test('all dashboard routes use the global session guard',async()=>{const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8');assert.match(source,/fetchSession\(\)\.then\(setUser\)/);assert.match(source,/window\.location\.replace\(`\/login\?redirect=/);assert.match(source,/canAccessPath\(path,user\)/)})
+test('only financial report routes require a session and preserve their login redirects',async()=>{
+  const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8')
+  assert.match(source,/fetchSession\(\)\.then\(setUser\)/)
+  assert.doesNotMatch(source,/user===null&&!login/)
+  assert.doesNotMatch(source,/!login&&!user/)
+  assert.match(source,/redirect:type==='balance'\?'\/neraca':'\/laba-rugi'/)
+  assert.match(source,/path:'\/neraca',component:.*ProtectedFinancialReport type="balance"/)
+  assert.match(source,/path:'\/laba-rugi',component:.*ProtectedFinancialReport type="income"/)
+})
+
+test('anonymous sidebar keeps Neraca and Laba Rugi visible',async()=>{
+  const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8')
+  assert.match(source,/const visible=user\?menu\.map/)
+  assert.match(source,/\):menu;/)
+  assert.match(source,/\['Neraca','\/neraca'\]/)
+  assert.match(source,/\['Laba Rugi','\/laba-rugi'\]/)
+})
