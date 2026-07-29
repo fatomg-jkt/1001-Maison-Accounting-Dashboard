@@ -9,7 +9,7 @@ export default async function handler(req:any,res:any){
     const email=normalizeEmail(body.email)
     if(!validEmail(email)||typeof body.password!=='string'){send(res,400,{message:'Email dan password wajib diisi.'});return}
     const user=await authenticate(email,body.password)
-    if(!user){send(res,401,{message:'Email atau password salah, atau pengguna tidak aktif.'});return}
+    if(!user){send(res,401,{message:'Email atau password salah'});return}
     res.setHeader('Set-Cookie',cookie(createSession(user)))
     send(res,200,{user:publicUser(user)})
   }catch(error){

@@ -7,3 +7,7 @@ export async function fetchSession():Promise<SessionUser|null>{
   const data=await response.json() as {user?:SessionUser}
   return data.user??null
 }
+
+export function safeLoginRedirect(value:string|null){
+  return value?.startsWith('/')&&!value.startsWith('//')&&!value.startsWith('/login')?value:'/'
+}
