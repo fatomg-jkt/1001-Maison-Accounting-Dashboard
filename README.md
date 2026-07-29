@@ -1,10 +1,23 @@
-# 1001-Maison-Accounting-Dashboard
-Financial Dashboard for 1001 &amp; Maison Group including Profit &amp; Loss, Balance Sheet, Cashflow, Budgeting and Financial Analytics.
+# 1001 Maison Accounting Dashboard
 
-## Financial report access
+Financial Dashboard for 1001 & Maison Group including Profit & Loss, Balance Sheet, Cashflow, Budgeting and Financial Analytics.
 
-Neraca and Laba Rugi use an eight-hour, HttpOnly server session. Configure
-`SESSION_SECRET`, `ACCESS_ADMIN_EMAIL`, `ACCESS_ADMIN_PASSWORD`, and
-`BLOB_READ_WRITE_TOKEN` in Vercel. The initial administrator is created from the
-admin credentials on first use; subsequent users are stored server-side in the
-private Vercel Blob `financial-access-users.json`.
+## Authentication and roles
+
+Every dashboard route is protected by an eight-hour, signed, HttpOnly session cookie. User records and bcrypt password hashes are kept in the private Vercel Blob `financial-access-users.json`; passwords are never sent back to the browser.
+
+Configure these Vercel environment variables before deploying:
+
+- `SESSION_SECRET`: a long random signing secret.
+- `BLOB_READ_WRITE_TOKEN`: the private Blob store token.
+- `SUPER_ADMIN_PASSWORD`: `Admin1001#Maison26` for the requested test account.
+- `ACCOUNTING_PASSWORD`: `Accounting1001#26` for the requested test account.
+- `MANAGEMENT_PASSWORD`: `ManagementMaison#26` for the requested test account.
+
+The corresponding server-defined emails are `superadmin@1001maison.test`, `accounting@1001maison.test`, and `management@1001maison.test`. Do not prefix the password variables with `VITE_`: they must remain server-only. Override the testing values with strong, unique secrets before production use.
+
+Role policy:
+
+- **Super Admin** has full dashboard, data, master-data, and account-management access.
+- **Accounting** has dashboard, reports, analysis, master-data, import/update/export access, but no user-management access.
+- **Management** has read/filter/export/print access and cannot open master data, account settings, uploads, or data-update controls.
