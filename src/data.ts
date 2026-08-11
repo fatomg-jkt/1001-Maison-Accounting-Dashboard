@@ -46,7 +46,7 @@ export const budgetService={
 
 
 
-export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string}[]}
+export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';filename?:string;syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string}[]}
 export type StoredReportRow=ManualReportPayload['rows'][number]&{reportType:'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;updatedAt:string;source:'manual'|'excel'|'accurate'}
 export const reportDataHistory:{company:string;period:string;reportType:string;rowCount:number;totalAmount:number;inputDate:string;source:'Manual'|'Upload Excel'|'Accurate'}[]=[]
 const reportStorageKey='maison-accounting-report-data'
