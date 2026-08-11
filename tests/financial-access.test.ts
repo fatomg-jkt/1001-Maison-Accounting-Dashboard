@@ -4,7 +4,7 @@ import {test} from 'node:test'
 import {canAccessNeracaAndLabaRugi,canAccessPath,canManageUsers,canWriteData,normalizeEmail,type SessionUser} from '../src/lib/financial-access.ts'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from '../api/_lib/session.ts'
 import {LOGIN_SERVER_ERROR,readLoginResponse} from '../src/lib/login-response.ts'
-import {safeLoginRedirect} from '../src/lib/session.ts'
+import {publicFinancialReportRedirect,safeLoginRedirect} from '../src/lib/session.ts'
 
 const secret='test-only-session-secret-with-sufficient-length'
 const admin:SessionUser={id:'admin-1',name:'Administrator',email:'admin@example.com',role:'SUPER_ADMIN'}
@@ -79,14 +79,25 @@ test('login redirect preserves safe internal destinations and rejects external o
   assert.equal(safeLoginRedirect('/login?redirect=/settings'),'/')
   assert.equal(safeLoginRedirect(null),'/')
 })
-test('only financial report routes require a session and preserve their login redirects',async()=>{
+test('Neraca and Laba Rugi routes render reports directly without an auth guard',async()=>{
   const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8')
-  assert.match(source,/fetchSession\(\)\.then\(setUser\)/)
-  assert.doesNotMatch(source,/user===null&&!login/)
-  assert.doesNotMatch(source,/!login&&!user/)
-  assert.match(source,/redirect:type==='balance'\?'\/neraca':'\/laba-rugi'/)
-  assert.match(source,/path:'\/neraca',component:.*ProtectedFinancialReport type="balance"/)
-  assert.match(source,/path:'\/laba-rugi',component:.*ProtectedFinancialReport type="income"/)
+  assert.match(source,/path:'\/neraca',component:\(\)=> <Report type="balance"\/>/)
+  assert.match(source,/path:'\/laba-rugi',component:\(\)=> <Report type="income"\/>/)
+  assert.doesNotMatch(source,/ProtectedFinancialReport/)
+  assert.doesNotMatch(source,/redirect:type==='balance'/)
+})
+
+test('legacy login report redirects resolve only to public financial reports',()=>{
+  assert.equal(publicFinancialReportRedirect('/neraca'),'/neraca')
+  assert.equal(publicFinancialReportRedirect('/laba-rugi'),'/laba-rugi')
+  assert.equal(publicFinancialReportRedirect('/settings'),null)
+  assert.equal(publicFinancialReportRedirect(null),null)
+})
+
+test('public report access does not create a fake session user',async()=>{
+  const source=await readFile(new URL('../src/lib/session.ts',import.meta.url),'utf8')
+  assert.doesNotMatch(source,/publicReportUser|public-financial-reports|public-reports@local/)
+  assert.match(source,/if\(response\.status===401\)return null/)
 })
 
 test('anonymous sidebar keeps Neraca and Laba Rugi visible',async()=>{

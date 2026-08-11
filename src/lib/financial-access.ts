@@ -11,6 +11,5 @@ export const canWriteData=(user:SessionUser|null|undefined)=>!!user&&['SUPER_ADM
 export const canManageUsers=(user:SessionUser|null|undefined)=>user?.role==='SUPER_ADMIN'
 
 export const canAccessPath=(path:string,user:SessionUser)=>{
-  if(user.id==='public-financial-reports')return ['/neraca','/laba-rugi'].includes(path)
   return user.role==='SUPER_ADMIN'||(user.role==='ACCOUNTING'?!path.startsWith('/settings'):!path.startsWith('/settings')&&!['/coa','/department','/cost-center','/budgeting/upload'].includes(path))
 }

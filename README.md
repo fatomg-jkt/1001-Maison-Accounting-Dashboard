@@ -8,7 +8,7 @@ The dashboard is a client-side SPA. `vercel.json` preserves `/api/*` for Vercel 
 
 ## Authentication and roles
 
-Every dashboard route is protected by an eight-hour, signed, HttpOnly session cookie. User records and bcrypt password hashes are kept in the private Vercel Blob `financial-access-users.json`; passwords are never sent back to the browser.
+The Balance Sheet (`/neraca`) and Profit & Loss (`/laba-rugi`) are public read-only routes. Authentication remains in place for protected operations such as writing data and managing users, using an eight-hour, signed, HttpOnly session cookie. User records and bcrypt password hashes are kept in the private Vercel Blob `financial-access-users.json`; passwords are never sent back to the browser.
 
 Configure these Vercel environment variables before deploying:
 
