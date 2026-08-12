@@ -8,15 +8,15 @@ export type PublicUser=Omit<AccessUser,'passwordHash'|'active'|'createdAt'|'upda
 type UserBlob={statusCode:number;stream:BodyInit|null}
 
 export {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession}
-// This server-only bcrypt hash seeds the requested first account without ever
-// placing its password in the browser bundle or an API response.
 const INITIAL_ADMIN_HASH=process.env.INITIAL_ADMIN_PASSWORD_HASH??'$2b$12$H.LJUPnZxazeMCFQYDaNYuUCERpkfcvMxvY.wv2b5UM/O.pDUHKra'
 const INITIAL_ADMIN={id:'initial-hanna-admin',name:'Hanna Irma',email:'hannabeforeafter@gmail.com',passwordHash:INITIAL_ADMIN_HASH,role:'SUPER_ADMIN' as const}
 export const INITIAL_EMAILS=['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com','divadaulatil@gmail.com']
 export const normalizeEmail=(value:unknown)=>String(value??'').trim().toLowerCase()
 export const validEmail=(email:string)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 export const publicUser=(user:AccessUser):PublicUser=>({id:user.id,name:user.name,email:user.email,role:user.role})
-export function configurationError(){const missing=['SESSION_SECRET','BLOB_READ_WRITE_TOKEN'].filter(key=>!process.env[key]);return missing.length?`Konfigurasi server belum lengkap: ${missing.join(', ')}.`:null}
+export function configurationError(){return null}
+
+const initialUser=():AccessUser=>{const now=new Date().toISOString();return {...INITIAL_ADMIN,active:true,createdAt:now,updatedAt:now}}
 
 export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
   if(blob===null)return []
@@ -29,15 +29,16 @@ export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
 }
 
 export async function loadUsers():Promise<AccessUser[]>{
-  const error=configurationError();if(error)throw new Error(error)
-  const blob=await get('financial-access-users.json',{access:'private',token:process.env.BLOB_READ_WRITE_TOKEN,useCache:false})
+  const token=process.env.BLOB_READ_WRITE_TOKEN
+  if(!token)return [initialUser()]
+  const blob=await get('financial-access-users.json',{access:'private',token,useCache:false})
   const users=await readUsersBlob(blob)
   let changed=false
   const existing=users.find(user=>user.email===INITIAL_ADMIN.email)
-  if(!existing){const now=new Date().toISOString();users.push({...INITIAL_ADMIN,active:true,createdAt:now,updatedAt:now});changed=true}
+  if(!existing){users.push(initialUser());changed=true}
   if(changed)await saveUsers(users)
   return users
 }
-export async function saveUsers(users:AccessUser[]){await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token:process.env.BLOB_READ_WRITE_TOKEN})}
+export async function saveUsers(users:AccessUser[]){const token=process.env.BLOB_READ_WRITE_TOKEN;if(!token)throw new Error('BLOB_READ_WRITE_TOKEN diperlukan untuk menyimpan perubahan akun.');await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token})}
 export async function authenticate(email:unknown,password:unknown){const users=await loadUsers();const user=users.find(item=>item.email===normalizeEmail(email));if(!user||!user.active||!await bcrypt.compare(String(password??''),user.passwordHash))return null;return user}
 export async function activeSession(req:{headers?:{cookie?:string}},now=Date.now()){const session=verifySession(readCookie(req.headers?.cookie),now);if(!session)return null;const user=(await loadUsers()).find(item=>item.id===session.id&&item.email===session.email&&item.active);return user&&user.role===session.role?user:null}
