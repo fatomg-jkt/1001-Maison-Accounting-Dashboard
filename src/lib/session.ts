@@ -8,8 +8,6 @@ export async function fetchSession():Promise<SessionUser|null>{
   return data.user??null
 }
 
-export function publicFinancialReportRedirect(value:string|null){return value==='/neraca'||value==='/laba-rugi'?value:null}
-
 export function safeLoginRedirect(value:string|null){
   return value?.startsWith('/')&&!value.startsWith('//')&&!value.startsWith('/login')?value:'/'
 }

@@ -1,4 +1,3 @@
-import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import {get,put} from '@vercel/blob'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from './session.js'
@@ -9,16 +8,15 @@ export type PublicUser=Omit<AccessUser,'passwordHash'|'active'|'createdAt'|'upda
 type UserBlob={statusCode:number;stream:BodyInit|null}
 
 export {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession}
-const CONFIGURED_USERS=[
-  {name:'Super Admin',email:'superadmin@1001maison.test',passwordKey:'SUPER_ADMIN_PASSWORD',role:'SUPER_ADMIN'},
-  {name:'Accounting',email:'accounting@1001maison.test',passwordKey:'ACCOUNTING_PASSWORD',role:'ACCOUNTING'},
-  {name:'Management',email:'management@1001maison.test',passwordKey:'MANAGEMENT_PASSWORD',role:'MANAGEMENT'},
-] as const
+// This server-only bcrypt hash seeds the requested first account without ever
+// placing its password in the browser bundle or an API response.
+const INITIAL_ADMIN_HASH=process.env.INITIAL_ADMIN_PASSWORD_HASH??'$2b$12$H.LJUPnZxazeMCFQYDaNYuUCERpkfcvMxvY.wv2b5UM/O.pDUHKra'
+const INITIAL_ADMIN={id:'initial-hanna-admin',name:'Hanna Irma',email:'hannabeforeafter@gmail.com',passwordHash:INITIAL_ADMIN_HASH,role:'SUPER_ADMIN' as const}
 export const INITIAL_EMAILS=['fat@1001official.com','uma@1001official.com','hannabeforeafter@gmail.com','finance@obsidian-managementgroup.com','hapsariuma@gmail.com','divadaulatil@gmail.com']
 export const normalizeEmail=(value:unknown)=>String(value??'').trim().toLowerCase()
 export const validEmail=(email:string)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 export const publicUser=(user:AccessUser):PublicUser=>({id:user.id,name:user.name,email:user.email,role:user.role})
-export function configurationError(){const missing=['SESSION_SECRET','SUPER_ADMIN_PASSWORD','ACCOUNTING_PASSWORD','MANAGEMENT_PASSWORD','BLOB_READ_WRITE_TOKEN'].filter(key=>!process.env[key]);return missing.length?`Konfigurasi server belum lengkap: ${missing.join(', ')}.`:null}
+export function configurationError(){const missing=['SESSION_SECRET','BLOB_READ_WRITE_TOKEN'].filter(key=>!process.env[key]);return missing.length?`Konfigurasi server belum lengkap: ${missing.join(', ')}.`:null}
 
 export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
   if(blob===null)return []
@@ -35,16 +33,8 @@ export async function loadUsers():Promise<AccessUser[]>{
   const blob=await get('financial-access-users.json',{access:'private',token:process.env.BLOB_READ_WRITE_TOKEN,useCache:false})
   const users=await readUsersBlob(blob)
   let changed=false
-  for(const configured of CONFIGURED_USERS){
-    const password=process.env[configured.passwordKey]!
-    const existing=users.find(user=>user.email===configured.email)
-    if(existing){
-      if(existing.role!==configured.role||!existing.active||!await bcrypt.compare(password,existing.passwordHash)){Object.assign(existing,{name:configured.name,role:configured.role,active:true,passwordHash:await bcrypt.hash(password,12),updatedAt:new Date().toISOString()});changed=true}
-    }else{
-      const now=new Date().toISOString()
-      users.push({id:crypto.randomUUID(),name:configured.name,email:configured.email,passwordHash:await bcrypt.hash(password,12),role:configured.role,active:true,createdAt:now,updatedAt:now});changed=true
-    }
-  }
+  const existing=users.find(user=>user.email===INITIAL_ADMIN.email)
+  if(!existing){const now=new Date().toISOString();users.push({...INITIAL_ADMIN,active:true,createdAt:now,updatedAt:now});changed=true}
   if(changed)await saveUsers(users)
   return users
 }
