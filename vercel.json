@@ -1,31 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "redirects": [
-    {
-      "source": "/login",
-      "has": [
-        {
-          "type": "query",
-          "key": "redirect",
-          "value": "/neraca"
-        }
-      ],
-      "destination": "/neraca",
-      "permanent": false
-    },
-    {
-      "source": "/login",
-      "has": [
-        {
-          "type": "query",
-          "key": "redirect",
-          "value": "/laba-rugi"
-        }
-      ],
-      "destination": "/laba-rugi",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",

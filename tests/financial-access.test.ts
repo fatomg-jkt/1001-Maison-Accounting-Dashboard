@@ -4,7 +4,7 @@ import {test} from 'node:test'
 import {canAccessNeracaAndLabaRugi,canAccessPath,canManageUsers,canWriteData,normalizeEmail,type SessionUser} from '../src/lib/financial-access.ts'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from '../api/_lib/session.ts'
 import {LOGIN_SERVER_ERROR,readLoginResponse} from '../src/lib/login-response.ts'
-import {publicFinancialReportRedirect,safeLoginRedirect} from '../src/lib/session.ts'
+import {safeLoginRedirect} from '../src/lib/session.ts'
 
 const secret='test-only-session-secret-with-sufficient-length'
 const admin:SessionUser={id:'admin-1',name:'Administrator',email:'admin@example.com',role:'SUPER_ADMIN'}
@@ -46,12 +46,12 @@ test('a missing private user blob starts with an empty user collection',async()=
   const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8')
   assert.match(source,/if\(blob===null\)return \[\]/)
 })
-test('the three configured accounts are seeded server-side with bcrypt hashes',async()=>{
+test('the initial administrator is seeded server-side with a bcrypt hash',async()=>{
   const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8')
-  for(const email of ['superadmin@1001maison.test','accounting@1001maison.test','management@1001maison.test'])assert.match(source,new RegExp(email.replace('.',String.raw`\.`)))
-  for(const key of ['SUPER_ADMIN_PASSWORD','ACCOUNTING_PASSWORD','MANAGEMENT_PASSWORD'])assert.match(source,new RegExp(key))
-  assert.match(source,/bcrypt\.hash\(password,12\)/)
-  assert.doesNotMatch(source,/Admin1001#Maison26|Accounting1001#26|ManagementMaison#26/)
+  assert.match(source,/hannabeforeafter@gmail\.com/)
+  assert.match(source,/INITIAL_ADMIN_PASSWORD_HASH/)
+  assert.match(source,/\$2b\$12\$/)
+  assert.doesNotMatch(source,/Hannairma4!/)
 })
 test('a null Blob stream is rejected before reading',async()=>{const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8');assert.match(source,/if\(blob\.stream===null\)throw/)})
 test('an empty Blob response produces an empty user collection',async()=>{const source=await readFile(new URL('../api/_lib/access.ts',import.meta.url),'utf8');assert.match(source,/if\(!text\.trim\(\)\)return \[\]/)})
@@ -79,19 +79,12 @@ test('login redirect preserves safe internal destinations and rejects external o
   assert.equal(safeLoginRedirect('/login?redirect=/settings'),'/')
   assert.equal(safeLoginRedirect(null),'/')
 })
-test('Neraca and Laba Rugi routes render reports directly without an auth guard',async()=>{
+test('all dashboard routes are behind the session gate',async()=>{
   const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8')
   assert.match(source,/path:'\/neraca',component:\(\)=> <Report type="balance"\/>/)
   assert.match(source,/path:'\/laba-rugi',component:\(\)=> <Report type="income"\/>/)
-  assert.doesNotMatch(source,/ProtectedFinancialReport/)
-  assert.doesNotMatch(source,/redirect:type==='balance'/)
-})
-
-test('legacy login report redirects resolve only to public financial reports',()=>{
-  assert.equal(publicFinancialReportRedirect('/neraca'),'/neraca')
-  assert.equal(publicFinancialReportRedirect('/laba-rugi'),'/laba-rugi')
-  assert.equal(publicFinancialReportRedirect('/settings'),null)
-  assert.equal(publicFinancialReportRedirect(null),null)
+  assert.match(source,/if\(user===null&&!login\)/)
+  assert.match(source,/window\.location\.replace\(`\/login\?redirect=/)
 })
 
 test('public report access does not create a fake session user',async()=>{
@@ -100,10 +93,8 @@ test('public report access does not create a fake session user',async()=>{
   assert.match(source,/if\(response\.status===401\)return null/)
 })
 
-test('anonymous sidebar keeps Neraca and Laba Rugi visible',async()=>{
+test('sidebar is only rendered after a verified session exists',async()=>{
   const source=await readFile(new URL('../src/main.tsx',import.meta.url),'utf8')
-  assert.match(source,/const visible=user\?menu\.map/)
-  assert.match(source,/\):menu;/)
-  assert.match(source,/\['Neraca','\/neraca'\]/)
-  assert.match(source,/\['Laba Rugi','\/laba-rugi'\]/)
+  assert.match(source,/if\(!user\)return null/)
+  assert.match(source,/<Sidebar open=/)
 })

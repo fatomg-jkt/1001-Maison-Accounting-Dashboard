@@ -8,17 +8,15 @@ The dashboard is a client-side SPA. `vercel.json` preserves `/api/*` for Vercel 
 
 ## Authentication and roles
 
-The Balance Sheet (`/neraca`) and Profit & Loss (`/laba-rugi`) are public read-only routes. Authentication remains in place for protected operations such as writing data and managing users, using an eight-hour, signed, HttpOnly session cookie. User records and bcrypt password hashes are kept in the private Vercel Blob `financial-access-users.json`; passwords are never sent back to the browser.
+Every dashboard route is protected by a server-validated session. Anonymous visitors are redirected to `/login`, while authenticated users keep access across refreshes through a signed, HttpOnly, SameSite=Lax cookie (eight hours, or 30 days when **Ingat saya** is selected). User records and bcrypt password hashes are kept in the private Vercel Blob `financial-access-users.json`; passwords and hashes are never sent back to the browser.
 
 Configure these Vercel environment variables before deploying:
 
 - `SESSION_SECRET`: a long random signing secret.
 - `BLOB_READ_WRITE_TOKEN`: the private Blob store token.
-- `SUPER_ADMIN_PASSWORD`: `Admin1001#Maison26` for the requested test account.
-- `ACCOUNTING_PASSWORD`: `Accounting1001#26` for the requested test account.
-- `MANAGEMENT_PASSWORD`: `ManagementMaison#26` for the requested test account.
+- `INITIAL_ADMIN_PASSWORD_HASH` (optional): a server-only bcrypt hash used to override the built-in initial-account hash.
 
-The corresponding server-defined emails are `superadmin@1001maison.test`, `accounting@1001maison.test`, and `management@1001maison.test`. Do not prefix the password variables with `VITE_`: they must remain server-only. Override the testing values with strong, unique secrets before production use.
+The initial administrator is seeded server-side as `hannabeforeafter@gmail.com`. Set `SESSION_SECRET` to a strong random value and provision `BLOB_READ_WRITE_TOKEN` in every Vercel environment. Never prefix either server variable with `VITE_`.
 
 Role policy:
 
