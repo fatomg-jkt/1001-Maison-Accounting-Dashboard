@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs'
-import {get,put} from '@vercel/blob'
 import {COOKIE_NAME,SESSION_SECONDS,clearCookie,cookie,createSession,readCookie,verifySession} from './session.js'
 
 export type AccessRole='SUPER_ADMIN'|'ACCOUNTING'|'MANAGEMENT'
@@ -30,7 +29,11 @@ export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
 
 export async function loadUsers():Promise<AccessUser[]>{
   const token=process.env.BLOB_READ_WRITE_TOKEN
+  // Login must still work when Blob has not been configured. Import the Blob
+  // SDK lazily so a transitive Blob dependency cannot crash /api/auth/login
+  // during module startup when this storage feature is unused.
   if(!token)return [initialUser()]
+  const {get}=await import('@vercel/blob')
   const blob=await get('financial-access-users.json',{access:'private',token,useCache:false})
   const users=await readUsersBlob(blob)
   let changed=false
@@ -39,6 +42,13 @@ export async function loadUsers():Promise<AccessUser[]>{
   if(changed)await saveUsers(users)
   return users
 }
-export async function saveUsers(users:AccessUser[]){const token=process.env.BLOB_READ_WRITE_TOKEN;if(!token)throw new Error('BLOB_READ_WRITE_TOKEN diperlukan untuk menyimpan perubahan akun.');await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token})}
+
+export async function saveUsers(users:AccessUser[]){
+  const token=process.env.BLOB_READ_WRITE_TOKEN
+  if(!token)throw new Error('BLOB_READ_WRITE_TOKEN diperlukan untuk menyimpan perubahan akun.')
+  const {put}=await import('@vercel/blob')
+  await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token})
+}
+
 export async function authenticate(email:unknown,password:unknown){const users=await loadUsers();const user=users.find(item=>item.email===normalizeEmail(email));if(!user||!user.active||!await bcrypt.compare(String(password??''),user.passwordHash))return null;return user}
 export async function activeSession(req:{headers?:{cookie?:string}},now=Date.now()){const session=verifySession(readCookie(req.headers?.cookie),now);if(!session)return null;const user=(await loadUsers()).find(item=>item.id===session.id&&item.email===session.email&&item.active);return user&&user.role===session.role?user:null}
