@@ -16,6 +16,7 @@ export const publicUser=(user:AccessUser):PublicUser=>({id:user.id,name:user.nam
 export function configurationError(){return null}
 
 const initialUser=():AccessUser=>{const now=new Date().toISOString();return {...INITIAL_ADMIN,active:true,createdAt:now,updatedAt:now}}
+const isInitialIdentity=(id:string,email:string)=>id===INITIAL_ADMIN.id&&normalizeEmail(email)===INITIAL_ADMIN.email
 
 export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
   if(blob===null)return []
@@ -29,9 +30,6 @@ export async function readUsersBlob(blob:UserBlob|null):Promise<AccessUser[]>{
 
 export async function loadUsers():Promise<AccessUser[]>{
   const token=process.env.BLOB_READ_WRITE_TOKEN
-  // Login must still work when Blob has not been configured. Import the Blob
-  // SDK lazily so a transitive Blob dependency cannot crash /api/auth/login
-  // during module startup when this storage feature is unused.
   if(!token)return [initialUser()]
   const {get}=await import('@vercel/blob')
   const blob=await get('financial-access-users.json',{access:'private',token,useCache:false})
@@ -50,5 +48,29 @@ export async function saveUsers(users:AccessUser[]){
   await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token})
 }
 
-export async function authenticate(email:unknown,password:unknown){const users=await loadUsers();const user=users.find(item=>item.email===normalizeEmail(email));if(!user||!user.active||!await bcrypt.compare(String(password??''),user.passwordHash))return null;return user}
-export async function activeSession(req:{headers?:{cookie?:string}},now=Date.now()){const session=verifySession(readCookie(req.headers?.cookie),now);if(!session)return null;const user=(await loadUsers()).find(item=>item.id===session.id&&item.email===session.email&&item.active);return user&&user.role===session.role?user:null}
+export async function authenticate(email:unknown,password:unknown){
+  const normalized=normalizeEmail(email)
+  // Keep the seeded administrator completely independent from Blob so the
+  // login endpoint can boot and authenticate even if Blob dependencies or
+  // storage configuration are unavailable in a deployment.
+  if(normalized===INITIAL_ADMIN.email){
+    const user=initialUser()
+    return await bcrypt.compare(String(password??''),user.passwordHash)?user:null
+  }
+  const users=await loadUsers()
+  const user=users.find(item=>item.email===normalized)
+  if(!user||!user.active||!await bcrypt.compare(String(password??''),user.passwordHash))return null
+  return user
+}
+
+export async function activeSession(req:{headers?:{cookie?:string}},now=Date.now()){
+  const session=verifySession(readCookie(req.headers?.cookie),now)
+  if(!session)return null
+  // The seeded administrator session also avoids Blob entirely.
+  if(isInitialIdentity(session.id,session.email)){
+    const user=initialUser()
+    return user.role===session.role?user:null
+  }
+  const user=(await loadUsers()).find(item=>item.id===session.id&&item.email===session.email&&item.active)
+  return user&&user.role===session.role?user:null
+}
