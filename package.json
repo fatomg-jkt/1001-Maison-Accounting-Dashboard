@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/generate-session-secret.mjs",
+    "prebuild": "node scripts/patch-income-margins.mjs && node scripts/generate-session-secret.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test:access": "node --test tests/financial-access.test.ts",
