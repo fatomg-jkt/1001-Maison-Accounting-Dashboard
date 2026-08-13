@@ -1,6 +1,7 @@
 export const ALL_COMPANIES = 'all' as const
 
 export const companies = [
+  {id:'1001',label:'1001',accurateEnvPrefix:'ACCURATE_1001'},
   {id:'CV. Sepuluh Januari Sukses',label:'CV. Sepuluh Januari Sukses',accurateEnvPrefix:'ACCURATE_SEPULUH_JANUARI_SUKSES'},
   {id:'PT. Mimama Laku Selalu',label:'PT. Mimama Laku Selalu',accurateEnvPrefix:'ACCURATE_MIMAMA_LAKU_SELALU'},
   {id:'CV. Seribu Toko Sukses',label:'CV. Seribu Toko Sukses',accurateEnvPrefix:'ACCURATE_SERIBU_TOKO_SUKSES'},
@@ -10,8 +11,8 @@ export const companies = [
 
 export type CompanyId = typeof companies[number]['id']
 export type CompanyFilter = typeof ALL_COMPANIES | CompanyId
-export type LegacyCompanyId = '1001' | 'Maison'
-export type StoredCompanyId = CompanyId | '1001'
+export type LegacyCompanyId = 'Maison'
+export type StoredCompanyId = CompanyId
 
 export const companyOptions = [
   {value:ALL_COMPANIES,label:'Semua Perusahaan'},
@@ -22,6 +23,10 @@ export const companyIds = companies.map(company=>company.id) as CompanyId[]
 
 export function isCompanyId(value:string):value is CompanyId {
   return companyIds.some(company=>company===value)
+}
+
+export function matchesCompanyFilter(company:StoredCompanyId,filter:CompanyFilter) {
+  return filter===ALL_COMPANIES||company===filter
 }
 
 export function migrateLegacyCompany(value:string):StoredCompanyId|string {

@@ -1,4 +1,4 @@
-import {ALL_COMPANIES,migrateLegacyCompany,type CompanyFilter,type CompanyId,type StoredCompanyId} from './lib/companies'
+import {ALL_COMPANIES,matchesCompanyFilter,migrateLegacyCompany,type CompanyFilter,type CompanyId,type StoredCompanyId} from './lib/companies'
 
 export const monthly = [
   {month:'Jan',revenue:4820,expense:3470,profit:1350,cash:920},{month:'Feb',revenue:5150,expense:3650,profit:1500,cash:1040},{month:'Mar',revenue:4980,expense:3590,profit:1390,cash:980},{month:'Apr',revenue:5560,expense:3810,profit:1750,cash:1210},{month:'Mei',revenue:5830,expense:3990,profit:1840,cash:1350},{month:'Jun',revenue:6240,expense:4160,profit:2080,cash:1490},
@@ -40,7 +40,7 @@ export const budgetMonthly=[
  {month:'Jan',budget:2650,actual:2110,remaining:540},{month:'Feb',budget:2720,actual:2290,remaining:430},{month:'Mar',budget:2840,actual:2510,remaining:330},{month:'Apr',budget:2920,actual:2680,remaining:240},{month:'Mei',budget:3020,actual:2850,remaining:170},{month:'Jun',budget:3805,actual:3386,remaining:419},
 ]
 export const budgetService={
- filter(company:CompanyFilter=ALL_COMPANIES){return budgetRows.filter(row=>company===ALL_COMPANIES?row.company!=='1001':row.company===company)},
+ filter(company:CompanyFilter=ALL_COMPANIES){return budgetRows.filter(row=>matchesCompanyFilter(row.company,company))},
  monthly(){return budgetMonthly},
  status(row:BudgetRow){const pct=row.budget?row.actual/row.budget*100:0;return pct>100?'Over Budget':pct>=80?'Perhatian':'Aman'},
  realization(row:BudgetRow){return row.budget?row.actual/row.budget*100:0}
@@ -77,6 +77,6 @@ export const reportDataService={
   return Promise.resolve({ok:true,payload})
  },
  list(){return readStoredRows()},
- getPeriod(filter:ReportPeriodFilter){const normalize=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();return readStoredRows().filter(row=>(filter.company===ALL_COMPANIES?row.company!=='1001':row.company===filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType&&(!filter.department||normalize(filter.department??'')===normalize('Semua Department')||normalize((row as StoredReportRow&{department?:string}).department)===normalize(filter.department??'')))},
+ getPeriod(filter:ReportPeriodFilter){const normalize=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();return readStoredRows().filter(row=>matchesCompanyFilter(row.company,filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType&&(!filter.department||normalize(filter.department??'')===normalize('Semua Department')||normalize((row as StoredReportRow&{department?:string}).department)===normalize(filter.department??'')))},
  history(){return reportDataHistory}
 }
