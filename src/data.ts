@@ -1,3 +1,5 @@
+import {ALL_COMPANIES,migrateLegacyCompany,type CompanyFilter,type CompanyId,type StoredCompanyId} from './lib/companies'
+
 export const monthly = [
   {month:'Jan',revenue:4820,expense:3470,profit:1350,cash:920},{month:'Feb',revenue:5150,expense:3650,profit:1500,cash:1040},{month:'Mar',revenue:4980,expense:3590,profit:1390,cash:980},{month:'Apr',revenue:5560,expense:3810,profit:1750,cash:1210},{month:'Mei',revenue:5830,expense:3990,profit:1840,cash:1350},{month:'Jun',revenue:6240,expense:4160,profit:2080,cash:1490},
 ]
@@ -17,7 +19,7 @@ export const balanceRows=[
 ]
 export const incomeRows=[{label:'PENDAPATAN',kind:'title'},{label:'Pendapatan Operasional',value:5780000000},{label:'Pendapatan Lain-lain',value:460000000},{label:'TOTAL PENDAPATAN',value:6240000000,kind:'grand'},{label:'Harga Pokok Penjualan',value:-2480000000},{label:'LABA KOTOR',value:3760000000,kind:'grand'},{label:'Beban Operasional',kind:'title'},{label:'Beban Administrasi',value:-620000000},{label:'Beban Penjualan',value:-540000000},{label:'Beban Umum',value:-310000000},{label:'TOTAL BEBAN',value:-1470000000,kind:'total'},{label:'LABA OPERASI',value:2290000000,kind:'grand'},{label:'Pendapatan/Beban Lain',value:90000000},{label:'LABA SEBELUM PAJAK',value:2380000000,kind:'grand'},{label:'Pajak',value:-300000000},{label:'LABA BERSIH',value:2080000000,kind:'grand'}]
 
-export type BudgetCompany='1001'|'Maison'
+export type BudgetCompany=StoredCompanyId
 export type BudgetMonth='Januari'|'Februari'|'Maret'|'April'|'Mei'|'Juni'|'Juli'|'Agustus'|'September'|'Oktober'|'November'|'Desember'
 export type BudgetRow={company:BudgetCompany;tahun:number;bulan:BudgetMonth;department:string;costCenter:string;kodeAkun:string;namaAkun:string;kategoriAkun:string;budget:number;actual:number}
 export const budgetRows:BudgetRow[]=[
@@ -26,19 +28,19 @@ export const budgetRows:BudgetRow[]=[
  {company:'1001',tahun:2026,bulan:'Juni',department:'Merchandise',costCenter:'GA-01',kodeAkun:'6301',namaAkun:'Sewa Kantor',kategoriAkun:'OPEX',budget:210000000,actual:174000000},
  {company:'1001',tahun:2026,bulan:'Juni',department:'HRD',costCenter:'HC-01',kodeAkun:'6401',namaAkun:'Gaji & Benefit',kategoriAkun:'OPEX',budget:480000000,actual:395000000},
  {company:'1001',tahun:2026,bulan:'Juni',department:'Development',costCenter:'IT-01',kodeAkun:'6501',namaAkun:'Lisensi Software',kategoriAkun:'OPEX',budget:110000000,actual:132000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'Operasional',costCenter:'OPS-02',kodeAkun:'6101',namaAkun:'Beban Bahan Baku',kategoriAkun:'COGS',budget:1050000000,actual:820000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'Marketing',costCenter:'MKT-02',kodeAkun:'6202',namaAkun:'Event & Promotion',kategoriAkun:'OPEX',budget:290000000,actual:268000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'Merchandise',costCenter:'GA-02',kodeAkun:'6302',namaAkun:'Utility',kategoriAkun:'OPEX',budget:165000000,actual:172000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'HRD',costCenter:'HC-02',kodeAkun:'6402',namaAkun:'Training',kategoriAkun:'OPEX',budget:85000000,actual:52000000},
- {company:'Maison',tahun:2026,bulan:'Juni',department:'Development',costCenter:'IT-02',kodeAkun:'6502',namaAkun:'Cloud Infrastructure',kategoriAkun:'OPEX',budget:145000000,actual:116000000},
+ {company:'CV. Maison Yvan Indonesia',tahun:2026,bulan:'Juni',department:'Operasional',costCenter:'OPS-02',kodeAkun:'6101',namaAkun:'Beban Bahan Baku',kategoriAkun:'COGS',budget:1050000000,actual:820000000},
+ {company:'CV. Maison Yvan Indonesia',tahun:2026,bulan:'Juni',department:'Marketing',costCenter:'MKT-02',kodeAkun:'6202',namaAkun:'Event & Promotion',kategoriAkun:'OPEX',budget:290000000,actual:268000000},
+ {company:'CV. Maison Yvan Indonesia',tahun:2026,bulan:'Juni',department:'Merchandise',costCenter:'GA-02',kodeAkun:'6302',namaAkun:'Utility',kategoriAkun:'OPEX',budget:165000000,actual:172000000},
+ {company:'CV. Maison Yvan Indonesia',tahun:2026,bulan:'Juni',department:'HRD',costCenter:'HC-02',kodeAkun:'6402',namaAkun:'Training',kategoriAkun:'OPEX',budget:85000000,actual:52000000},
+ {company:'CV. Maison Yvan Indonesia',tahun:2026,bulan:'Juni',department:'Development',costCenter:'IT-02',kodeAkun:'6502',namaAkun:'Cloud Infrastructure',kategoriAkun:'OPEX',budget:145000000,actual:116000000},
  {company:'1001',tahun:2026,bulan:'Mei',department:'Operasional',costCenter:'OPS-01',kodeAkun:'6101',namaAkun:'Beban Bahan Baku',kategoriAkun:'COGS',budget:880000000,actual:790000000},
- {company:'Maison',tahun:2026,bulan:'Mei',department:'Marketing',costCenter:'MKT-02',kodeAkun:'6202',namaAkun:'Event & Promotion',kategoriAkun:'OPEX',budget:260000000,actual:231000000}
+ {company:'CV. Maison Yvan Indonesia',tahun:2026,bulan:'Mei',department:'Marketing',costCenter:'MKT-02',kodeAkun:'6202',namaAkun:'Event & Promotion',kategoriAkun:'OPEX',budget:260000000,actual:231000000}
 ]
 export const budgetMonthly=[
  {month:'Jan',budget:2650,actual:2110,remaining:540},{month:'Feb',budget:2720,actual:2290,remaining:430},{month:'Mar',budget:2840,actual:2510,remaining:330},{month:'Apr',budget:2920,actual:2680,remaining:240},{month:'Mei',budget:3020,actual:2850,remaining:170},{month:'Jun',budget:3805,actual:3386,remaining:419},
 ]
 export const budgetService={
- filter(company:'all'|'pt-1001'|'pt-maison'='all'){return budgetRows.filter(r=>company==='all'||(company==='pt-1001'?r.company==='1001':r.company==='Maison'))},
+ filter(company:CompanyFilter=ALL_COMPANIES){return budgetRows.filter(row=>company===ALL_COMPANIES?row.company!=='1001':row.company===company)},
  monthly(){return budgetMonthly},
  status(row:BudgetRow){const pct=row.budget?row.actual/row.budget*100:0;return pct>100?'Over Budget':pct>=80?'Perhatian':'Aman'},
  realization(row:BudgetRow){return row.budget?row.actual/row.budget*100:0}
@@ -46,14 +48,20 @@ export const budgetService={
 
 
 
-export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';filename?:string;syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string}[]}
-export type StoredReportRow=ManualReportPayload['rows'][number]&{reportType:'balance_sheet'|'profit_loss';company:'1001'|'Maison';month:string;year:number;updatedAt:string;source:'manual'|'excel'|'accurate'}
+export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:CompanyId;month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';filename?:string;syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string}[]}
+export type StoredReportRow=ManualReportPayload['rows'][number]&{reportType:'balance_sheet'|'profit_loss';company:StoredCompanyId;month:string;year:number;updatedAt:string;source:'manual'|'excel'|'accurate'}
 export const reportDataHistory:{company:string;period:string;reportType:string;rowCount:number;totalAmount:number;inputDate:string;source:'Manual'|'Upload Excel'|'Accurate'}[]=[]
 const reportStorageKey='maison-accounting-report-data'
 const normalizeReportType=(reportType:ManualReportPayload['reportType']):StoredReportRow['reportType']=>reportType==='Neraca'||reportType==='balance_sheet'?'balance_sheet':'profit_loss'
-const readStoredRows=():StoredReportRow[]=>{try{return JSON.parse(localStorage.getItem(reportStorageKey)??'[]') as StoredReportRow[]}catch{return []}}
+const readStoredRows=():StoredReportRow[]=>{try{
+ const stored=JSON.parse(localStorage.getItem(reportStorageKey)??'[]') as (Omit<StoredReportRow,'company'>&{company:string})[]
+ let migrated=false
+ const rows=stored.map(row=>{const company=migrateLegacyCompany(row.company);migrated=migrated||company!==row.company;return {...row,company} as StoredReportRow})
+ if(migrated)localStorage.setItem(reportStorageKey,JSON.stringify(rows))
+ return rows
+ }catch{return []}}
 const writeStoredRows=(rows:StoredReportRow[])=>{localStorage.setItem(reportStorageKey,JSON.stringify(rows));window.dispatchEvent(new CustomEvent('report-data-updated',{detail:{key:reportStorageKey}}))}
-export type ReportPeriodFilter={company:'all'|'1001'|'Maison';month:string;year:number;reportType:'balance_sheet'|'profit_loss';department?:string}
+export type ReportPeriodFilter={company:CompanyFilter;month:string;year:number;reportType:'balance_sheet'|'profit_loss';department?:string}
 export const reportDataService={
  save(payload:ManualReportPayload){
   const normalizedType=normalizeReportType(payload.reportType)
@@ -69,6 +77,6 @@ export const reportDataService={
   return Promise.resolve({ok:true,payload})
  },
  list(){return readStoredRows()},
- getPeriod(filter:ReportPeriodFilter){const normalize=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();return readStoredRows().filter(row=>(filter.company==='all'||row.company===filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType&&(!filter.department||normalize(filter.department??'')===normalize('Semua Department')||normalize((row as StoredReportRow&{department?:string}).department)===normalize(filter.department??'')))},
+ getPeriod(filter:ReportPeriodFilter){const normalize=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();return readStoredRows().filter(row=>(filter.company===ALL_COMPANIES?row.company!=='1001':row.company===filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType&&(!filter.department||normalize(filter.department??'')===normalize('Semua Department')||normalize((row as StoredReportRow&{department?:string}).department)===normalize(filter.department??'')))},
  history(){return reportDataHistory}
 }
