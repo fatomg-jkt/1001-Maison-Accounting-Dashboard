@@ -22,7 +22,7 @@ export default {
           content:'"1001 & Maison\\A Accounting"',
           display:'block',
           whiteSpace:'pre-line',
-          color:'#F8FAFC',
+          color:'#FFF7EA',
           fontSize:'11px',
           lineHeight:'1.25',
           fontWeight:'600',
