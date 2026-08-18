@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap');
 @tailwind base; @tailwind components; @tailwind utilities;
 
 :root{
@@ -15,6 +15,7 @@
 @layer base{
   *{box-sizing:border-box}
   body{@apply m-0 font-sans antialiased; background:var(--color-body); color:var(--color-text)}
+  h1,h2,h3,h4,h5,h6{font-family:'Playfair Display',serif}
   button,select,input{@apply font-sans transition-all duration-200 ease-out}
   input,select{background:var(--color-card-secondary); border-color:var(--color-border); color:var(--color-text)}
   input::placeholder{color:var(--color-label)}
