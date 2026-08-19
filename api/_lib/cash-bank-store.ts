@@ -1,5 +1,5 @@
 export type CashBankRow={id:string;company:string;month:string;year:number;bankName:string;currency:string;endingBalance:number;description?:string;accountNumber?:string;createdAt:string;updatedAt:string}
-export type BankStatement={id:string;company:string;month:string;year:number;bankName:string;accountNumber?:string;description?:string;fileName:string;contentType:string;size:number;blobPath:string;uploadedAt:string;uploadedBy:{id:string;name:string;email:string}}
+export type BankStatement={id:string;company:string;month:string;year:number;bankName:string;bankAccountId?:string;accountNumber?:string;description?:string;fileName:string;contentType:string;size:number;blobPath:string;uploadedAt:string;uploadedBy:{id:string;name:string;email:string}}
 
 const token=()=>{const value=process.env.BLOB_READ_WRITE_TOKEN;if(!value)throw new Error('Konfigurasi server belum lengkap: BLOB_READ_WRITE_TOKEN diperlukan.');return value}
 async function readJson<T>(path:string,fallback:T):Promise<T>{const {get}=await import('@vercel/blob');const result=await get(path,{access:'private',token:token(),useCache:false});if(!result?.stream)return fallback;const text=await new Response(result.stream).text();return text.trim()?JSON.parse(text) as T:fallback}
