@@ -1,0 +1,6 @@
+import {failure,json,method,requireWriteAccess,send} from './_lib/http.js'
+import {loadCashBankRows,saveCashBankRows} from './_lib/cash-bank-store.js'
+import {validateCashBankRows} from '../src/lib/cash-bank-validation.js'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export default async function handler(req:any,res:any){if(!method(req,res,['GET','POST']))return;try{if(req.method==='GET'){const q=req.query??{};const rows=(await loadCashBankRows()).filter(row=>(!q.company||row.company===q.company)&&(!q.month||row.month===q.month)&&(!q.year||row.year===Number(q.year)));return send(res,200,{rows})}if(!await requireWriteAccess(req,res))return;const body=await json(req);const parsed=validateCashBankRows(body.rows);if(parsed.errors.length)return send(res,400,{message:'Data Kas & Bank tidak valid.',errors:parsed.errors});const existing=await loadCashBankRows();const keys=new Set(parsed.rows.map(row=>`${row.company}|${row.year}|${row.month}|${row.bankName.toLowerCase()}`));await saveCashBankRows([...existing.filter(row=>!keys.has(`${row.company}|${row.year}|${row.month}|${row.bankName.toLowerCase()}`)),...parsed.rows]);send(res,200,{message:`${parsed.rows.length} akun Kas & Bank berhasil disimpan.`,rows:parsed.rows})}catch(error){failure(res,error)}}
