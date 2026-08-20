@@ -14,7 +14,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.66.0",
     "@tanstack/react-router": "^1.98.0",
-    "@vercel/blob": "^2.3.0",
+    "@vercel/blob": "^2.5.0",
     "bcryptjs": "^3.0.2",
     "is-node-process": "^1.2.0",
     "lucide-react": "^0.468.0",
