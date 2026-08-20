@@ -10,6 +10,7 @@ import {canAccessPath,canManageUsers,canWriteData,type AccessRole,type SessionUs
 import {fetchSession,safeLoginRedirect} from './lib/session'
 import {readLoginResponse} from './lib/login-response'
 import {ALL_COMPANIES,companies as companyMaster,companyLabel,companyOptions,isCompanyId,matchesCompanyFilter,type CompanyFilter,type CompanyId} from './lib/companies'
+import {toCashBankPayload} from './lib/cash-bank-import'
 import './index.css'
 
 const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:300000}}})
@@ -215,7 +216,7 @@ function DataImportActions({types}:{types:DataImportType[]}){
         await queryClient.invalidateQueries();window.dispatchEvent(new CustomEvent('report-data-updated'))
       }else if(type==='cash_bank'){
         const validRows=preview.rows.filter(row=>!row._errors)
-        const response=await fetch('/api/cash-bank',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:validRows.map(row=>({company:row.Perusahaan,month:row.Bulan,year:row.Tahun,bankName:row['Nama Bank'],currency:row['Mata Uang'],endingBalance:row['Saldo Akhir'],description:row.Keterangan}))})})
+        const response=await fetch('/api/cash-bank',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:toCashBankPayload(validRows)})})
         const result=await response.json().catch(()=>({}))
         if(!response.ok)throw new Error([result.message,result.detail,...(result.errors??[])].filter(Boolean).join('\n')||'Data gagal disimpan.')
         await queryClient.invalidateQueries({queryKey:['cash-bank']});window.dispatchEvent(new CustomEvent('report-data-updated',{detail:{type}}))
