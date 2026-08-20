@@ -1,12 +1,15 @@
 export type CashBankRow={id:string;company:string;month:string;year:number;bankName:string;currency:string;endingBalance:number;description?:string;accountNumber?:string;createdAt:string;updatedAt:string}
 export type BankStatement={id:string;company:string;month:string;year:number;bankName:string;bankAccountId?:string;accountNumber?:string;description?:string;fileName:string;contentType:string;size:number;blobPath:string;uploadedAt:string;uploadedBy:{id:string;name:string;email:string}}
 
-type BlobAuth={token:string}
+type BlobAuth={token?:string;oidcToken?:string;storeId?:string}
 
 function blobAuth():BlobAuth{
   const token=process.env.BLOB_READ_WRITE_TOKEN?.trim()
   if(token)return {token}
-  throw new Error('Konfigurasi Blob belum lengkap: BLOB_READ_WRITE_TOKEN tidak tersedia.')
+  const oidcToken=process.env.VERCEL_OIDC_TOKEN?.trim()
+  const storeId=process.env.BLOB_STORE_ID?.trim()
+  if(oidcToken&&storeId)return {oidcToken,storeId}
+  throw new Error('Konfigurasi Blob belum lengkap. Hubungkan Vercel Blob ke project atau set BLOB_READ_WRITE_TOKEN.')
 }
 
 export function isMissingBlob(error:unknown){
