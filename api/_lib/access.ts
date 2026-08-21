@@ -32,7 +32,7 @@ export async function loadUsers():Promise<AccessUser[]>{
   const token=process.env.BLOB_READ_WRITE_TOKEN
   if(!token)return [initialUser()]
   const {get}=await import('@vercel/blob')
-  const blob=await get('financial-access-users.json',{access:'private',token,useCache:false})
+  const blob=await get('financial-access-users.json',{access:'private',token:process.env.BLOB_READ_WRITE_TOKEN,useCache:false})
   const users=await readUsersBlob(blob)
   let changed=false
   const existing=users.find(user=>user.email===INITIAL_ADMIN.email)
@@ -45,7 +45,7 @@ export async function saveUsers(users:AccessUser[]){
   const token=process.env.BLOB_READ_WRITE_TOKEN
   if(!token)throw new Error('BLOB_READ_WRITE_TOKEN diperlukan untuk menyimpan perubahan akun.')
   const {put}=await import('@vercel/blob')
-  await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token})
+  await put('financial-access-users.json',JSON.stringify({users},null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,token:process.env.BLOB_READ_WRITE_TOKEN})
 }
 
 export async function authenticate(email:unknown,password:unknown){

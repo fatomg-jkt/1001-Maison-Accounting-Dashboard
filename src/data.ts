@@ -1,4 +1,4 @@
-import {ALL_COMPANIES,matchesCompanyFilter,migrateLegacyCompany,type CompanyFilter,type CompanyId,type StoredCompanyId} from './lib/companies'
+import {ALL_COMPANIES,type CompanyFilter,type CompanyId,type StoredCompanyId} from './lib/companies'
 
 export const monthly = [
   {month:'Jan',revenue:4820,expense:3470,profit:1350,cash:920},{month:'Feb',revenue:5150,expense:3650,profit:1500,cash:1040},{month:'Mar',revenue:4980,expense:3590,profit:1390,cash:980},{month:'Apr',revenue:5560,expense:3810,profit:1750,cash:1210},{month:'Mei',revenue:5830,expense:3990,profit:1840,cash:1350},{month:'Jun',revenue:6240,expense:4160,profit:2080,cash:1490},
@@ -40,7 +40,7 @@ export const budgetMonthly=[
  {month:'Jan',budget:2650,actual:2110,remaining:540},{month:'Feb',budget:2720,actual:2290,remaining:430},{month:'Mar',budget:2840,actual:2510,remaining:330},{month:'Apr',budget:2920,actual:2680,remaining:240},{month:'Mei',budget:3020,actual:2850,remaining:170},{month:'Jun',budget:3805,actual:3386,remaining:419},
 ]
 export const budgetService={
- filter(company:CompanyFilter=ALL_COMPANIES){return budgetRows.filter(row=>matchesCompanyFilter(row.company,company))},
+ async list(){const response=await fetch('/api/operational-data?type=budget'),result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(String(result.message??'Data gagal dimuat dari database.'));return (result.rows??[]) as BudgetRow[]},
  monthly(){return budgetMonthly},
  status(row:BudgetRow){const pct=row.budget?row.actual/row.budget*100:0;return pct>100?'Over Budget':pct>=80?'Perhatian':'Aman'},
  realization(row:BudgetRow){return row.budget?row.actual/row.budget*100:0}
@@ -48,35 +48,37 @@ export const budgetService={
 
 
 
-export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:CompanyId;month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';filename?:string;syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string}[]}
-export type StoredReportRow=ManualReportPayload['rows'][number]&{reportType:'balance_sheet'|'profit_loss';company:StoredCompanyId;month:string;year:number;updatedAt:string;source:'manual'|'excel'|'accurate'}
+export type ManualReportPayload={reportType:'Neraca'|'Laba Rugi'|'Neraca dan Laba Rugi'|'balance_sheet'|'profit_loss';company:CompanyId;month:string;year:number;uploadMode:string;source:'manual'|'excel'|'accurate';filename?:string;syncedAt?:string;accountCount?:number;rows:{accountCode:string;accountName:string;accountType?:string;category:string;subcategory:string;amount:number;department?:string;costCenter?:string}[]}
+export type StoredReportRow=ManualReportPayload['rows'][number]&{reportType:'balance_sheet'|'profit_loss';company:StoredCompanyId;month:string;year:number;createdAt:string;updatedAt:string;source:'manual'|'excel'|'accurate'}
 export const reportDataHistory:{company:string;period:string;reportType:string;rowCount:number;totalAmount:number;inputDate:string;source:'Manual'|'Upload Excel'|'Accurate'}[]=[]
 const reportStorageKey='maison-accounting-report-data'
 const normalizeReportType=(reportType:ManualReportPayload['reportType']):StoredReportRow['reportType']=>reportType==='Neraca'||reportType==='balance_sheet'?'balance_sheet':'profit_loss'
-const readStoredRows=():StoredReportRow[]=>{try{
- const stored=JSON.parse(localStorage.getItem(reportStorageKey)??'[]') as (Omit<StoredReportRow,'company'>&{company:string})[]
- let migrated=false
- const rows=stored.map(row=>{const company=migrateLegacyCompany(row.company);migrated=migrated||company!==row.company;return {...row,company} as StoredReportRow})
- if(migrated)localStorage.setItem(reportStorageKey,JSON.stringify(rows))
- return rows
- }catch{return []}}
-const writeStoredRows=(rows:StoredReportRow[])=>{localStorage.setItem(reportStorageKey,JSON.stringify(rows));window.dispatchEvent(new CustomEvent('report-data-updated',{detail:{key:reportStorageKey}}))}
-export type ReportPeriodFilter={company:CompanyFilter;month:string;year:number;reportType:'balance_sheet'|'profit_loss';department?:string}
+const migrationKey=`${reportStorageKey}-blob-migrated-v1`
+async function requestReports(query=''){
+ const response=await fetch(`/api/financial-reports${query}`),result=await response.json().catch(()=>({}))
+ if(!response.ok)throw new Error(String(result.message??'Data gagal dimuat dari database.'))
+ return (result.rows??[]) as StoredReportRow[]
+}
+async function migrateLegacyReports(){
+ if(typeof window==='undefined'||localStorage.getItem(migrationKey))return
+ let rows:StoredReportRow[]=[];try{rows=JSON.parse(localStorage.getItem(reportStorageKey)??'[]') as StoredReportRow[]}catch{return}
+ if(!rows.length){localStorage.setItem(migrationKey,'empty');return}
+ const groups=new Map<string,StoredReportRow[]>()
+ rows.forEach(row=>{const key=[row.company,row.month,row.year,row.reportType].join('|');groups.set(key,[...(groups.get(key)??[]),row])})
+ for(const group of groups.values()){const first=group[0];await reportDataService.save({company:first.company as CompanyId,month:first.month,year:first.year,reportType:first.reportType,uploadMode:'append',source:first.source,rows:group.map(({accountCode,accountName,accountType,category,subcategory,amount,department,costCenter})=>({accountCode,accountName,accountType,category,subcategory,amount,department,costCenter}))},false)}
+ localStorage.setItem(migrationKey,new Date().toISOString())
+}
+export type ReportPeriodFilter={company:CompanyFilter;month:string;year:number;reportType:'balance_sheet'|'profit_loss';department?:string;costCenter?:string}
 export const reportDataService={
- save(payload:ManualReportPayload){
-  const normalizedType=normalizeReportType(payload.reportType)
-  const inputDate=new Date().toISOString()
-  const existing=readStoredRows()
-  const samePeriod=(row:StoredReportRow)=>row.company===payload.company&&row.month===payload.month&&row.year===payload.year&&row.reportType===normalizedType
-  const incoming=payload.rows.map(row=>({...row,reportType:normalizedType,company:payload.company,month:payload.month,year:payload.year,updatedAt:inputDate,source:payload.source}))
-  const normalizeDepartment=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase()
-  const incomingByAccount=new Map(incoming.map(row=>[`${row.accountCode}-${normalizeDepartment(row.department)}`,row]))
-  const untouched=payload.uploadMode==='replace'||payload.uploadMode==='Ganti data periode ini'?existing.filter(row=>!samePeriod(row)):existing.filter(row=>!(samePeriod(row)&&incomingByAccount.has(`${row.accountCode}-${normalizeDepartment(row.department)}`)))
-  writeStoredRows([...untouched,...incoming])
-  reportDataHistory.unshift({company:payload.company,period:`${payload.month} ${payload.year}`,reportType:normalizedType==='balance_sheet'?'Neraca':'Laba Rugi',rowCount:payload.rows.length,totalAmount:payload.rows.reduce((a,b)=>a+b.amount,0),inputDate,source:payload.source==='accurate'?'Accurate':payload.source==='manual'?'Manual':'Upload Excel'})
-  return Promise.resolve({ok:true,payload})
+ async save(payload:ManualReportPayload,migrate=true){
+  if(migrate)await migrateLegacyReports()
+  const normalizedType=normalizeReportType(payload.reportType),response=await fetch('/api/financial-reports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,reportType:normalizedType})}),result=await response.json().catch(()=>({}))
+  if(!response.ok||!result.success)throw new Error(String(result.message??'Data laporan gagal disimpan ke database.'))
+  const inputDate=new Date().toISOString();reportDataHistory.unshift({company:payload.company,period:`${payload.month} ${payload.year}`,reportType:normalizedType==='balance_sheet'?'Neraca':'Laba Rugi',rowCount:payload.rows.length,totalAmount:payload.rows.reduce((a,b)=>a+b.amount,0),inputDate,source:payload.source==='accurate'?'Accurate':payload.source==='manual'?'Manual':'Upload Excel'})
+  window.dispatchEvent(new CustomEvent('report-data-updated',{detail:{key:'server'}}))
+  return result
  },
- list(){return readStoredRows()},
- getPeriod(filter:ReportPeriodFilter){const normalize=(value:string|undefined)=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();return readStoredRows().filter(row=>matchesCompanyFilter(row.company,filter.company)&&row.month===filter.month&&row.year===filter.year&&row.reportType===filter.reportType&&(!filter.department||normalize(filter.department??'')===normalize('Semua Department')||normalize((row as StoredReportRow&{department?:string}).department)===normalize(filter.department??'')))},
+ async list(){await migrateLegacyReports();return requestReports()},
+ async getPeriod(filter:ReportPeriodFilter){await migrateLegacyReports();const query=new URLSearchParams();if(filter.company!==ALL_COMPANIES)query.set('company',filter.company);query.set('month',filter.month);query.set('year',String(filter.year));query.set('reportType',filter.reportType);if(filter.department)query.set('department',filter.department);if(filter.costCenter)query.set('costCenter',filter.costCenter);return requestReports(`?${query}`)},
  history(){return reportDataHistory}
 }

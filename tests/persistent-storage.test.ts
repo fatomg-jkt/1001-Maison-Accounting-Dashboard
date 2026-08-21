@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import {mergePersistentReport as mergeReport,persistentReportPath as reportPath,mergePersistentOperational as mergeOperational,type PersistentReportPayload as ReportPayload,type PersistentReportRow as ReportRow} from '../src/lib/storage-merge.ts'
+
+const payload=(company:string,month:string,reportType:'balance_sheet'|'profit_loss',amount=10):ReportPayload=>({company,month,year:2026,reportType,uploadMode:'replace',source:'excel',rows:[{accountCode:'1001',accountName:'Akun',category:reportType==='balance_sheet'?'Aset':'Pendapatan',subcategory:'Umum',amount}]})
+const save=(database:Map<string,ReportRow[]>,input:ReportPayload)=>database.set(reportPath(input),mergeReport(database.get(reportPath(input))??[],input,'2026-08-21T00:00:00.000Z'))
+
+test('Neraca tersimpan dan tetap dapat dibaca oleh instance/user lain',()=>{const db=new Map<string,ReportRow[]>();save(db,payload('1001','Januari','balance_sheet'));assert.equal(db.get(reportPath(payload('1001','Januari','balance_sheet')))?.[0].amount,10)})
+test('Laba Rugi tersimpan dan tetap dapat dibaca setelah reload',()=>{const db=new Map<string,ReportRow[]>();save(db,payload('1001','Januari','profit_loss'));assert.equal(db.get(reportPath(payload('1001','Januari','profit_loss')))?.length,1)})
+test('perusahaan A tidak hilang setelah perusahaan B disimpan',()=>{const db=new Map<string,ReportRow[]>();save(db,payload('A','Januari','balance_sheet'));save(db,payload('B','Januari','balance_sheet'));assert.equal(db.size,2)})
+test('Januari tidak hilang setelah Februari disimpan',()=>{const db=new Map<string,ReportRow[]>();save(db,payload('A','Januari','balance_sheet'));save(db,payload('A','Februari','balance_sheet'));assert.equal(db.size,2)})
+test('Neraca dan Laba Rugi menggunakan objek Blob terpisah',()=>{assert.notEqual(reportPath(payload('A','Januari','balance_sheet')),reportPath(payload('A','Januari','profit_loss')))})
+test('replace hanya mengganti periode identik',()=>{const db=new Map<string,ReportRow[]>();const first=payload('A','Januari','balance_sheet',10);save(db,first);save(db,{...first,rows:[{...first.rows[0],amount:99}]});assert.equal(db.size,1);assert.equal(db.get(reportPath(first))?.[0].amount,99)})
+test('append mengganti akun sama dan mempertahankan akun lain',()=>{const first=payload('A','Januari','balance_sheet');const existing=mergeReport([],first);const rows=mergeReport(existing,{...first,uploadMode:'append',rows:[{...first.rows[0],amount:20},{...first.rows[0],accountCode:'1002'}]});assert.deepEqual(rows.map(row=>row.accountCode).sort(),['1001','1002']);assert.equal(rows.find(row=>row.accountCode==='1001')?.amount,20)})
+test('Budget perusahaan/periode/akun lain tidak tertimpa',()=>{const old=[{company:'A',tahun:2026,bulan:'Januari',department:'FAT',kodeAkun:'1',budget:1},{company:'B',tahun:2026,bulan:'Januari',department:'FAT',kodeAkun:'1',budget:2}];const merged=mergeOperational('budget',old,[{...old[0],budget:3}]);assert.equal(merged.length,2);assert.equal(merged.find(row=>row.company==='B')?.budget,2)})
+test('path laporan tidak pernah menyentuh path Kas & Bank existing',()=>{assert.equal(reportPath(payload('A','Januari','balance_sheet')).startsWith('financial-reports/'),true);assert.notEqual(reportPath(payload('A','Januari','balance_sheet')),'cash-bank/accounts.json')})
