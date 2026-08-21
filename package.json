@@ -8,6 +8,8 @@
     "prebuild": "node scripts/patch-income-margins.mjs && node scripts/generate-session-secret.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "pretest": "node scripts/generate-session-secret.mjs",
+    "test": "node --test tests/*.test.ts",
     "test:access": "node --test tests/financial-access.test.ts",
     "preview": "vite preview"
   },
