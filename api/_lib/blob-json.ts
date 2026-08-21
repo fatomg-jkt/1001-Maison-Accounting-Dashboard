@@ -1,7 +1,12 @@
-export function blobToken(){
+type BlobAuth={token?:string;oidcToken?:string;storeId?:string}
+
+export function blobAuth():BlobAuth{
   const token=process.env.BLOB_READ_WRITE_TOKEN?.trim()
-  if(!token)throw new Error('Konfigurasi Blob belum lengkap: BLOB_READ_WRITE_TOKEN tidak tersedia.')
-  return token
+  if(token)return {token}
+  const oidcToken=process.env.VERCEL_OIDC_TOKEN?.trim()
+  const storeId=process.env.BLOB_STORE_ID?.trim()
+  if(oidcToken&&storeId)return {oidcToken,storeId}
+  throw new Error('Konfigurasi Blob belum lengkap. Hubungkan Vercel Blob ke project atau set BLOB_READ_WRITE_TOKEN.')
 }
 
 export function missingBlob(error:unknown){
@@ -11,7 +16,7 @@ export function missingBlob(error:unknown){
 export async function readBlobJson<T>(path:string,fallback:T):Promise<T>{
   try{
     const {get}=await import('@vercel/blob')
-    const blob=await get(path,{access:'private',useCache:false,token:blobToken()})
+    const blob=await get(path,{access:'private',useCache:false,...blobAuth()})
     if(!blob?.stream)return fallback
     const text=await new Response(blob.stream).text()
     return text.trim()?JSON.parse(text) as T:fallback
@@ -20,5 +25,5 @@ export async function readBlobJson<T>(path:string,fallback:T):Promise<T>{
 
 export async function writeBlobJson(path:string,value:unknown){
   const {put}=await import('@vercel/blob')
-  await put(path,JSON.stringify(value,null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,contentType:'application/json',token:blobToken()})
+  await put(path,JSON.stringify(value,null,2),{access:'private',addRandomSuffix:false,allowOverwrite:true,contentType:'application/json',...blobAuth()})
 }
