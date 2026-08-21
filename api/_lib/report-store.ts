@@ -1,4 +1,4 @@
-import {blobToken,readBlobJson,writeBlobJson} from './blob-json.js'
+import {blobAuth,readBlobJson,writeBlobJson} from './blob-json.js'
 import {mergePersistentReport,persistentReportPath,type PersistentReportPayload,type PersistentReportRow,type PersistentReportType} from '../../src/lib/storage-merge.js'
 
 export type ReportType=PersistentReportType
@@ -15,7 +15,7 @@ export async function saveReport(payload:ReportPayload){
 
 export async function listReports(){
   const {list}=await import('@vercel/blob')
-  const result=await list({prefix:'financial-reports/',token:blobToken(),limit:1000})
+  const result=await list({prefix:'financial-reports/',limit:1000,...blobAuth()})
   const paths=result.blobs.filter(blob=>blob.pathname.endsWith('.json')).map(blob=>blob.pathname)
   return (await Promise.all(paths.map(path=>readBlobJson<ReportRow[]>(path,[])))).flat()
 }
